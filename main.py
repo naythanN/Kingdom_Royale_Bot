@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import os
+import asyncio
 
 from player import Player
 from kingdomRoyale import KingdomRoyale
@@ -64,6 +65,15 @@ async def reg (ctx):
 	for i in range(len(game.listPlayers)):
 		game.setSecretMeetings (await guild.create_voice_channel("Meeting Room " + str(i)))
 	game.setBigRoom (await guild.create_voice_channel("Big Room"))
+
+	taskTimeTable = asyncio.create_task (timeTable (ctx))
+	await ctx.send("O guilherminho é super gay")
+
+
+async def timeTable (ctx):
+	await ctx.send("O guilherminho é gay")
+	await asyncio.sleep(30)
+	await ctx.send("O guilherminho é bem gay")
 
 
 
