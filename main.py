@@ -3,6 +3,7 @@ from discord.ext import commands
 import os
 import asyncio
 
+
 from player import Player
 from kingdomRoyale import KingdomRoyale
 
@@ -50,6 +51,30 @@ async def reg (ctx):
 	game.addPlayer(ctx.message.author)
 	
 
+@client.command(name = "class")
+async def reg (ctx, gameClass):
+
+
+	player = ctx.message.author
+	for i in game.getListPlayers():
+		if i.member == player and i.gameClass == None:
+			if gameClass == None:
+				game.getPrivateTextChannel(i.name).send("Choose a class")
+				return
+			if gameClass not in game.avaiableClasses:
+				game.getPrivateTextChannel(i.name).send("Wrong Class name")
+				return
+			if i.isPlayer == False:
+				game.getPrivateTextChannel(i.name).send("You can't choose your class")
+				return
+			pastClasses = [classes.gameClass for classes in game.pastPlayers]
+			if gameClass in pastClasses:
+				game.getPrivateTextChannel(i.name).send("Class already choosen before")
+				return
+			i.setClass(gameClass)
+
+
+
 	
 @client.command(name = "start")
 async def reg (ctx):
@@ -64,6 +89,10 @@ async def reg (ctx):
 
 	game.setBigRoomV (await guild.create_voice_channel("Big Room"))
 	game.setBigRoomC (await guild.create_text_channel("Big Room"))
+	game.setPlayer()
+	game.setClasses()
+	
+
 
 	game.taskTimeTable = asyncio.create_task (timeTable (ctx))
 	
@@ -79,6 +108,8 @@ async def timeTable (ctx):
 		for j in game.getListPlayers():
 			personRoom = game.getPrivateTextChannel(j.name)
 			await personRoom.send(f"{game.getDays()[i]} Day <A> [{j.name}]'s room")
+			if j.isPlayer == True and i == 1:
+				await personRoom.send(f"Gufufu - PleaSed to - meEt you - {j.name}-kun - Alright - you wiLl now - select yOur [class]")
 			await j.getID().move_to(j.getPrivateVoiceChannel())
 
 		await asyncio.sleep(10)

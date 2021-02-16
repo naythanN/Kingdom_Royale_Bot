@@ -11,8 +11,12 @@ class Player:
 		self.strike = True
 		self.privateTextChannel = None
 		self.privateVoiceChannel = None
+		self.isPlayer = False
 		self.deathCause = ""
 	
+	def setPlayer (self):
+		self.isPlayer = True
+
 	def setClass (self, gameClass):
 		self.gameClass = gameClass
 
