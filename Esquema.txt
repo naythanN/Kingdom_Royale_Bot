@@ -1,0 +1,54 @@
+Kingdom Royale:
+	Cria as salas de chat e voz grande e privadas
+
+	Atribui aos jogadores as salas de chat e voz privadas aleatóriamente
+
+	for i in range (numero_de_rodadas):
+
+		Move os jogadores para as salas de chat e voz privadas
+
+		Atribui aos jogadores as classes, as duplas e o player aleatóriamente
+
+		dia = 0
+		while (dia < 7) and (verifica_condições_de_vitória() == false):
+
+			Move os jogadores para a sala de chat e voz grande
+			Comando para facada disponível
+			await asyncio.sleep(tempo da reunião na sala grande)
+
+			Realiza as secret meetings:
+				Recebe os comandos de seleção dos parceiros para a secret meeting
+				Cria uma fila de secret meetings para cada jogador
+				Executa as secret meetings de acordo com as filas
+
+			Move os jogadores para as salas de chat e voz privadas
+
+			Mostra e execulta os comandos disponíveis para os jogadores:
+				[Substituition]
+				[Murder]
+				[Sorcery]
+				[Deathblow]
+				Fala se alguém morreu no chat grande
+
+			Move os jogadores para a sala de chat e voz grande
+			Comando para facada disponível
+			await asyncio.sleep(tempo da reunião na sala grande)
+
+			Move os jogadores para as salas de chat e voz privadas
+
+			Mostra e execulta os comandos disponíveis para os jogadores:
+				[Assassination]
+				Fala se alguém morreu no chat grande
+		
+			dia += 1
+
+		Soma os pontos da rodada
+
+def verifica_condições_de_vitória():
+	pass
+		
+
+		
+
+
+
