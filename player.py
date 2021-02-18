@@ -1,5 +1,7 @@
 from os import name
 
+import discord
+
 
 class Player:
 	def __init__(self, name, id):# -> None:
@@ -12,7 +14,9 @@ class Player:
 		self.privateTextChannel = None
 		self.privateVoiceChannel = None
 		self.isPlayer = False
+		self.killer = []
 		self.deathCause = ""
+		
 	
 	def setPlayer (self):
 		self.isPlayer = True
@@ -38,5 +42,6 @@ class Player:
 	def getClass(self):
 		return self.gameClass
 
-	def getID(self):
+	def getID(self) -> discord.Member:
 		return self.member
+

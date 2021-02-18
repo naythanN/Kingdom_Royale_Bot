@@ -19,13 +19,7 @@ async def on_ready() :
     await client.change_presence(status = discord.Status.idle, activity = discord.Game("Listening to .help"))
     print("I am online")
 
-@client.command()
-async def ping(ctx) :
-    await ctx.send(f"🏓 Pong with {str(round(client.latency, 2))}")
 
-@client.command(name="whoami")
-async def whoami(ctx) :
-    await ctx.send(f"You are {ctx.message.author.name}")
 
 
 @client.command()
@@ -45,11 +39,59 @@ async def reset (ctx):
 	game.__init__()
 
 
+@client.command(name = "Sorcery")
+async def reg (ctx):
+	player = ctx.message.author
+	for i in game.getListPlayers():
+		if i.getID() == player and i.getClass() == "Sorcerer":
+			game.sorcery(i)
+			return
+	game.getPrivateTextChannel(player.name).send("Sorcery unavaiable")
+
+@client.command(name = "Deathblow")
+async def reg (ctx):
+	player = ctx.message.author
+	for i in game.getListPlayers():
+		if i.getID() == player and i.getClass() == "Knight":
+			game.deathblow(i)
+			return
+	game.getPrivateTextChannel(player.name).send("Deathblow unavaiable")
+
+@client.command(name = "Murder")
+async def reg (ctx, target):
+	player = ctx.message.author
+	for i in game.getListPlayers():
+		if i.getID() == player and i == game.getMurderUser():
+			game.murder(target)
+			return
+	game.getPrivateTextChannel(player.name).send("Murder unavaiable")
+
+@client.command(name = "Substitution")
+async def reg (ctx):
+	player = ctx.message.author
+	for i in game.getListPlayers():
+		if i.getID() == player and i.getClass() == "King":
+			game.sorcery()
+			return
+	game.getPrivateTextChannel(player.name).send("Substitution unavaiable")
+
+@client.command(name = "Assassination")
+async def reg (ctx, target):
+	player = ctx.message.author
+	for i in game.getListPlayers():
+		if i.getID() == player and i.getClass() == "Revolutionary":
+			game.assassination(target)
+			return
+	game.getPrivateTextChannel(player.name).send("Sorcery unavaiable")
 
 @client.command(name = "reg")
 async def reg (ctx):
 	game.addPlayer(ctx.message.author)
-	
+
+@client.command(name = "choose")
+async def reg (ctx, target):
+	game.addPlayer(ctx.message.author)
+	player = ctx.message.author
 
 @client.command(name = "class")
 async def reg (ctx, gameClass):
@@ -72,6 +114,7 @@ async def reg (ctx, gameClass):
 				game.getPrivateTextChannel(i.name).send("Class already choosen before")
 				return
 			i.setClass(gameClass)
+			game.classToPick.remove(gameClass)
 
 
 
@@ -90,8 +133,6 @@ async def reg (ctx):
 	game.setBigRoomV (await guild.create_voice_channel("Big Room"))
 	game.setBigRoomC (await guild.create_text_channel("Big Room"))
 	game.setPlayer()
-	game.setClasses()
-	
 
 
 	game.taskTimeTable = asyncio.create_task (timeTable (ctx))
@@ -100,42 +141,87 @@ async def reg (ctx):
 
 async def timeTable (ctx):
 	await ctx.send("Welcome to Kingdom Royale! Hehe")
-	for i in range(7):
-		bigRoomC = game.getBigRoomChat()
-		bigRoomV = game.getBigRoomVoice()
-		await bigRoomC.send(f"{game.getDays()[i]} Day <A> owns's room")
-		
-		for j in game.getListPlayers():
-			personRoom = game.getPrivateTextChannel(j.name)
-			await personRoom.send(f"{game.getDays()[i]} Day <A> [{j.name}]'s room")
-			if j.isPlayer == True and i == 1:
-				await personRoom.send(f"Gufufu - PleaSed to - meEt you - {j.name}-kun - Alright - you wiLl now - select yOur [class]")
-			await j.getID().move_to(j.getPrivateVoiceChannel())
+	for i in range(6):
+		if i != 0:
+			game.turnReset()
+			game.setPlayer()
+		for i in range(7):
+			bigRoomC = game.getBigRoomChat()
+			bigRoomV = game.getBigRoomVoice()
+			await bigRoomC.send(f"{game.getDays()[i]} Day <A> owns's room")
+			
+			for j in game.getListPlayers():
+				personRoom = game.getPrivateTextChannel(j.name)
+				await personRoom.send(f"{game.getDays()[i]} Day <A> [{j.name}]'s room")
+				if j.isPlayer == True and i == 0:
+					await personRoom.send(f"Gufufu - PleaSed to - meEt you - {j.name}-kun - Alright - you wiLl now - select yOur [class]")
+				await j.getID().move_to(j.getPrivateVoiceChannel())
 
-		await asyncio.sleep(10)
-		await bigRoomC.send(f"{game.getDays()[i]} Day <B> Big room")
-		for j in game.getListPlayers():
-			await j.getID().move_to(bigRoomV)
-		await asyncio.sleep(10)
-		await bigRoomC.send(f"{game.getDays()[i]} Day <C> owns's room")
-		for j in game.getListPlayers():
-			await j.getID().move_to(j.getPrivateVoiceChannel())
-		await asyncio.sleep(10)
+			await asyncio.sleep(10)
+			await bigRoomC.send(f"{game.getDays()[i]} Day <B> Big room")
+			for j in game.getListPlayers():
+				await j.getID().move_to(bigRoomV)
+			await asyncio.sleep(10)
+			await bigRoomC.send(f"{game.getDays()[i]} Day <C> owns's room")
+			if i == 0:
+				game.setClasses()
+				for j in game.getListPlayers():
+					personRoom = game.getPrivateTextChannel(j.name)
+					await personRoom.send(f"Your [class] is [{j.gameClass}]")
 
-		await bigRoomC.send(f"{game.getDays()[i]} Day <D> Big room")
-		for j in game.getListPlayers():
-			await j.getID().move_to(bigRoomV)
+			for j in game.getListPlayers():
+				personRoom = game.getPrivateTextChannel(j.name)
+				if j.getClass() == "Sorcerer":
+					if game.murderTarget is None:
+						await personRoom.send(f"No target has been selected for [Murder] yet.")
+					else:
+						await personRoom.send(f"Will you burn [{game.murderTarget.getName()}] to death by using [Sorcery]?")
+				if j.getClass() == "Knight":
+					classes = [classes.gameClass for classes in game.getListPlayers()]
+					#if "Sorcerer" in classes:
+				#		await personRoom.send(f"No target has been selected for [Murder] yet.")
+					if game.murderTarget is None and "Sorcerer" not in classes:
+						await personRoom.send(f"No target has been selected for [Murder] yet.")
+					elif game.murderTarget is not None and "Sorcerer" not in classes:
+						await personRoom.send(f"Do you want to kill [{game.murderTarget.getName()}] by using [Deathblow]?")
+				if j.getClass() == "King":
+					if j == game.getMurderUser():
+						await personRoom.send(f"Please select a target for [Murder]")
+					await personRoom.send(f"Will you change roles with The Double?")
+				
+				
+				if j.getClass() == "Prince":
+					classes = [classes.gameClass for classes in game.getListPlayers()]
+					if j == game.getMurderUser():
+						await personRoom.send(f"Please select a target for [Murder]")
+					else:
+						await personRoom.send(f"Murder unavaiable")
+				if j.getClass() == "Double":
+					classes = [classes.gameClass for classes in game.getListPlayers()]
+					if j == game.getMurderUser():
+						await personRoom.send(f"Please select a target for [Murder]")
+					else:
+						await personRoom.send(f"Murder unavaiable")
 
-		await asyncio.sleep(10)
+				await j.getID().move_to(j.getPrivateVoiceChannel())
+			await asyncio.sleep(10)
 
-		await bigRoomC.send(f"{game.getDays()[i]} Day <E> owns's room")
+			await bigRoomC.send(f"{game.getDays()[i]} Day <D> Big room")
+			for j in game.getListPlayers():
+				await j.getID().move_to(bigRoomV)
 
-		for j in game.getListPlayers():
-			personRoom = game.getPrivateTextChannel(j.name)
-			await personRoom.send(f"{game.getDays()[i]} Day <E> [{j.name}]'s room")
-			await j.getID().move_to(j.getPrivateVoiceChannel())
-		
-		await asyncio.sleep(10)
+			await asyncio.sleep(10)
+
+			await bigRoomC.send(f"{game.getDays()[i]} Day <E> owns's room")
+
+			for j in game.getListPlayers():
+				personRoom = game.getPrivateTextChannel(j.name)
+				await personRoom.send(f"{game.getDays()[i]} Day <E> [{j.name}]'s room")
+				if j.getClass() == "Revolutionary":
+					await personRoom.send(f"Please select a target for [Assassination]")
+				await j.getID().move_to(j.getPrivateVoiceChannel())
+			
+			await asyncio.sleep(10)
 
 
 client.run(token)
