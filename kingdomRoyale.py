@@ -1,3 +1,4 @@
+import asyncio
 from os import kill
 from typing import List
 from player import Player
@@ -22,35 +23,69 @@ class KingdomRoyale:
 		self.murderTarget : Player = None
 		self.substitutionUsed = False
 		self.canUseSubstitution = True
+		self.actions = []
+		self.secretMeetings : List[SecretMeeting] = []
+		self.secretMeetingTime : int = 10
+
 
 		
 
 	def sorcery (self, killer):
-		self.murderTarget.life = 0
-		self.murderTarget.status = "Dead"
-		self.murderTarget.deathCause = "Burnt to Death by [Sorcery]"
-		
-		self.murderTarget.killer.append(killer)
+		yield
+		if self.murderTarget.gameClass != "Prince":
 
-		self.listPlayers.remove(self.murderTarget)
+			self.murderTarget.life = 0
+			self.murderTarget.status = "Dead"
+			self.murderTarget.deathCause = "Burnt to Death by [Sorcery]"
+			
+			self.murderTarget.killer.append(killer)
+
+			self.listPlayers.remove(self.murderTarget)
+			
+		yield
 
 	def turnReset (self):
-		pass
+		self.listDeadPlayers = []
+		self.avaiableClasses = ["King", "Prince", "Double", "Revolutionary", "Sorcerer", "Knight"]
+		self.classToPick = ["King", "Prince", "Double", "Revolutionary", "Sorcerer", "Knight"]
+		self.player = None
+		self.murderTarget : Player = None
+		self.substitutionUsed = False
+		self.canUseSubstitution = True
+		self.actions = []
+		self.secretMeetings : List[SecretMeeting] = []
+		self.secretMeetingTime : int = 10
 	
-	def murder (self, target, killer):
+	def murder (self, target):
 		playerTarget = next(player for player in self.listPlayers if player.name == target)
 		self.murderTarget = playerTarget
 		self.murderTarget.killer.append(self.getMurderUser())
 
 	
-	def assassination (self):
-		pass
+	def assassination (self, target):
+		yield
+		playerTarget = next(player for player in self.listPlayers if player.name == target)
+		if playerTarget.gameClass == "King" and self.substituionUsed == True:
+			self.murderTarget = self.getClass("Double")
+		else:
+			self.murderTarget = playerTarget
+		self.murderTarget.killer.append(self.getMurderUser())
+		yield
 
 	def deathblow (self, killer):
-		pass
+		yield
+		self.murderTarget.life = 0
+		self.murderTarget.status = "Dead"
+		self.murderTarget.deathCause = "Death by [Deathblow]"
+		
+		self.murderTarget.killer.append(killer)
+
+		self.listPlayers.remove(self.murderTarget)
+		yield
 
 	def substitution(self):
 		self.substituionUsed = True
+		self.canUseSubstitution = False
 
 	def addPlayer (self, id):
 		self.listPlayers.append(Player(id.name, id))
@@ -129,4 +164,33 @@ class KingdomRoyale:
 		else:
 			return None
 
+	def makeSecretMeeting (self) -> None:
+		for i in self.secretMeetings:
+			asyncio.create_task(i.arrange())
+
+	def getClass(self, gameClass) -> Player:
+		return next([players for players in self.listPlayers if players.gameClass == gameClass])
+
+	def makeTable (self):
+		pass
+
+
+class SecretMeeting:
+	def __init__(self, chooser, chosen) -> None:
+
+		self.time = KingdomRoyale.secretMeetingTime
+		self.whoRoom : Player = chooser
+		self.other : Player = chosen
 	
+	def double (self) -> None:
+		self.time = self.time*2
+
+	async def arrange (self) -> None:
+		while self.whoRoom.occupied == True or self.other.occupied == True:
+			await asyncio.sleep(KingdomRoyale.secretMeetingTime)
+		self.whoRoom.occupied = True
+		self.other.occupied = True
+		self.other.getID().move_to(self.whoRoom.getPrivateVoiceChannel())
+		await asyncio.sleep(self.time)
+		self.whoRoom.occupied = False
+		self.other.occupied = False

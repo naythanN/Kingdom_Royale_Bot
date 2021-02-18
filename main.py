@@ -5,7 +5,7 @@ import asyncio
 
 
 from player import Player
-from kingdomRoyale import KingdomRoyale
+from kingdomRoyale import KingdomRoyale, SecretMeeting
 
 client = commands.Bot(command_prefix="/")
 token = os.getenv("DISCORD_BOT_TOKEN")
@@ -53,7 +53,7 @@ async def reg (ctx):
 	player = ctx.message.author
 	for i in game.getListPlayers():
 		if i.getID() == player and i.getClass() == "Knight":
-			game.deathblow(i)
+			game.actions.append(game.deathblow(i))
 			return
 	game.getPrivateTextChannel(player.name).send("Deathblow unavaiable")
 
@@ -70,8 +70,8 @@ async def reg (ctx, target):
 async def reg (ctx):
 	player = ctx.message.author
 	for i in game.getListPlayers():
-		if i.getID() == player and i.getClass() == "King":
-			game.sorcery()
+		if i.getID() == player and i.getClass() == "King" and game.canUseSubstitution == True:
+			game.substitution()
 			return
 	game.getPrivateTextChannel(player.name).send("Substitution unavaiable")
 
@@ -90,8 +90,19 @@ async def reg (ctx):
 
 @client.command(name = "choose")
 async def reg (ctx, target):
-	game.addPlayer(ctx.message.author)
+	
 	player = ctx.message.author
+
+	playerChooser = next([players for players in game.getListPlayers() if players.name == player])
+	playerChosen = next([players for players in game.getListPlayers() if players.name == target])
+
+	toDouble = next([players.other for players in game.secretMeetings if players.whoRoom == playerChosen])
+	if toDouble == playerChooser:
+		secret = next([secret for secret in game.secretMeetings if secret.whoRoom == playerChosen])
+		secret.double()
+	else:
+		secret = SecretMeeting(playerChooser, playerChosen)
+		game.secretMeetings.append(secret)
 
 @client.command(name = "class")
 async def reg (ctx, gameClass):
@@ -146,6 +157,7 @@ async def timeTable (ctx):
 			game.turnReset()
 			game.setPlayer()
 		for i in range(7):
+			game.secretMeetings.clear()
 			bigRoomC = game.getBigRoomChat()
 			bigRoomV = game.getBigRoomVoice()
 			await bigRoomC.send(f"{game.getDays()[i]} Day <A> owns's room")
@@ -187,7 +199,8 @@ async def timeTable (ctx):
 				if j.getClass() == "King":
 					if j == game.getMurderUser():
 						await personRoom.send(f"Please select a target for [Murder]")
-					await personRoom.send(f"Will you change roles with The Double?")
+					if game.canUseSubstitution == True:
+						await personRoom.send(f"Will you change roles with The Double?")
 				
 				
 				if j.getClass() == "Prince":

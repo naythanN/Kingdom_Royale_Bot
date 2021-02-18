@@ -16,6 +16,7 @@ class Player:
 		self.isPlayer = False
 		self.killer = []
 		self.deathCause = ""
+		self.occupied = False
 		
 	
 	def setPlayer (self):
