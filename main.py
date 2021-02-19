@@ -22,6 +22,7 @@ async def on_ready() :
 
 
 
+
 @client.command()
 async def clear(ctx, amount=3) :
     await ctx.channel.purge(limit=amount)
@@ -39,12 +40,23 @@ async def reset (ctx):
 	game.__init__()
 
 
+
+@client.command(name = "cleanMess")
+async def cleanMess (ctx):
+	thisServer = ctx.message.guild
+	for i in thisServer.channels:
+		await i.delete()
+	await thisServer.create_voice_channel("Geral")
+	await thisServer.create_text_channel("Geral")
+	game.__init__()
+
+
 @client.command(name = "Sorcery")
 async def reg (ctx):
 	player = ctx.message.author
 	for i in game.getListPlayers():
 		if i.getID() == player and i.getClass() == "Sorcerer":
-			game.sorcery(i)
+			game.actions.append(game.sorcery(i))
 			return
 	game.getPrivateTextChannel(player.name).send("Sorcery unavaiable")
 
@@ -55,7 +67,7 @@ async def reg (ctx):
 		if i.getID() == player and i.getClass() == "Knight":
 			game.actions.append(game.deathblow(i))
 			return
-	game.getPrivateTextChannel(player.name).send("Deathblow unavaiable")
+	await game.getPrivateTextChannel(player.name).send("Deathblow unavaiable")
 
 @client.command(name = "Murder")
 async def reg (ctx, target):
@@ -64,7 +76,7 @@ async def reg (ctx, target):
 		if i.getID() == player and i == game.getMurderUser():
 			game.murder(target)
 			return
-	game.getPrivateTextChannel(player.name).send("Murder unavaiable")
+	await game.getPrivateTextChannel(player.name).send("Murder unavaiable")
 
 @client.command(name = "Substitution")
 async def reg (ctx):
@@ -73,7 +85,7 @@ async def reg (ctx):
 		if i.getID() == player and i.getClass() == "King" and game.canUseSubstitution == True:
 			game.substitution()
 			return
-	game.getPrivateTextChannel(player.name).send("Substitution unavaiable")
+	await game.getPrivateTextChannel(player.name).send("Substitution unavaiable")
 
 @client.command(name = "Assassination")
 async def reg (ctx, target):
@@ -82,7 +94,7 @@ async def reg (ctx, target):
 		if i.getID() == player and i.getClass() == "Revolutionary":
 			game.assassination(target)
 			return
-	game.getPrivateTextChannel(player.name).send("Sorcery unavaiable")
+	await game.getPrivateTextChannel(player.name).send("Sorcery unavaiable")
 
 @client.command(name = "reg")
 async def reg (ctx):
@@ -112,17 +124,17 @@ async def reg (ctx, gameClass):
 	for i in game.getListPlayers():
 		if i.member == player and i.gameClass == None:
 			if gameClass == None:
-				game.getPrivateTextChannel(i.name).send("Choose a class")
+				await game.getPrivateTextChannel(i.name).send("Choose a class")
 				return
 			if gameClass not in game.avaiableClasses:
-				game.getPrivateTextChannel(i.name).send("Wrong Class name")
+				await game.getPrivateTextChannel(i.name).send("Wrong Class name")
 				return
 			if i.isPlayer == False:
-				game.getPrivateTextChannel(i.name).send("You can't choose your class")
+				await game.getPrivateTextChannel(i.name).send("You can't choose your class")
 				return
 			pastClasses = [classes.gameClass for classes in game.pastPlayers]
 			if gameClass in pastClasses:
-				game.getPrivateTextChannel(i.name).send("Class already choosen before")
+				await game.getPrivateTextChannel(i.name).send("Class already choosen before")
 				return
 			i.setClass(gameClass)
 			game.classToPick.remove(gameClass)
@@ -138,8 +150,9 @@ async def reg (ctx):
 			guild.default_role : discord.PermissionOverwrite(read_messages=False),
 			guild.me: discord.PermissionOverwrite(read_messages=True)
 		}
-		game.setPrivateTextChannel(await guild.create_text_channel(i.name + "'s room", overwrites = overwrites), i.name)
-		game.setPrivateVoiceChannel(await guild.create_voice_channel(i.name + "'s room", overwrites = overwrites), i.name)
+		await game.setPrivateTextChannel(await guild.create_text_channel(i.name + "'s room", overwrites = overwrites), i.name)
+
+		await game.setPrivateVoiceChannel(await guild.create_voice_channel(i.name + "'s room", overwrites = overwrites), i.name)
 
 	game.setBigRoomV (await guild.create_voice_channel("Big Room"))
 	game.setBigRoomC (await guild.create_text_channel("Big Room"))
@@ -152,8 +165,8 @@ async def reg (ctx):
 
 async def timeTable (ctx):
 	await ctx.send("Welcome to Kingdom Royale! Hehe")
-	for i in range(6):
-		if i != 0:
+	for k in range(6):
+		if k != 0:
 			game.turnReset()
 			game.setPlayer()
 		for i in range(7):
@@ -169,11 +182,11 @@ async def timeTable (ctx):
 					await personRoom.send(f"Gufufu - PleaSed to - meEt you - {j.name}-kun - Alright - you wiLl now - select yOur [class]")
 				await j.getID().move_to(j.getPrivateVoiceChannel())
 
-			await asyncio.sleep(10)
+			await asyncio.sleep(game.sleepTimeTable)
 			await bigRoomC.send(f"{game.getDays()[i]} Day <B> Big room")
 			for j in game.getListPlayers():
 				await j.getID().move_to(bigRoomV)
-			await asyncio.sleep(10)
+			await asyncio.sleep(game.sleepTimeTable)
 			await bigRoomC.send(f"{game.getDays()[i]} Day <C> owns's room")
 			if i == 0:
 				game.setClasses()
@@ -217,13 +230,20 @@ async def timeTable (ctx):
 						await personRoom.send(f"Murder unavaiable")
 
 				await j.getID().move_to(j.getPrivateVoiceChannel())
-			await asyncio.sleep(10)
+
+			await asyncio.sleep(30)
+			
+			game.makeSecretMeeting()
+			await asyncio.sleep(5)
+			for i in game.actions:
+				next(i)
+				next(i)
 
 			await bigRoomC.send(f"{game.getDays()[i]} Day <D> Big room")
 			for j in game.getListPlayers():
 				await j.getID().move_to(bigRoomV)
 
-			await asyncio.sleep(10)
+			await asyncio.sleep(game.sleepTimeTable)
 
 			await bigRoomC.send(f"{game.getDays()[i]} Day <E> owns's room")
 
