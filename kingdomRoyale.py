@@ -6,9 +6,12 @@ import random
 import discord
 
 
+
 class KingdomRoyale:
+	secretMeetingTime : int = 20
+
 	def __init__(self):# -> None:
-		self.listPlayers = []
+		self.listPlayers : List[Player] = []
 		self.listDeadPlayers = []
 		self.privateTextChannels = []
 		self.privateVoiceChannels = []
@@ -25,7 +28,8 @@ class KingdomRoyale:
 		self.canUseSubstitution = True
 		self.actions = []
 		self.secretMeetings : List[SecretMeeting] = []
-		self.secretMeetingTime : int = 10
+		self.secretMeetingTime : int = 20
+		self.sleepTimeTable : int = 30
 
 
 		
@@ -41,7 +45,7 @@ class KingdomRoyale:
 			self.murderTarget.killer.append(killer)
 
 			self.listPlayers.remove(self.murderTarget)
-			
+
 		yield
 
 	def turnReset (self):
@@ -69,7 +73,7 @@ class KingdomRoyale:
 			self.murderTarget = self.getClass("Double")
 		else:
 			self.murderTarget = playerTarget
-		self.murderTarget.killer.append(self.getMurderUser())
+		self.murderTarget.killer.append(self.getClass("Revolutionary"))
 		yield
 
 	def deathblow (self, killer):
@@ -99,20 +103,23 @@ class KingdomRoyale:
 
 	def setClasses (self):
 		for i in self.listPlayers:
-			numberClass = int(random.uniform(0, len(self.classToPick)))
-			i.setClass(self.classToPick[numberClass])
-			self.classToPick.remove(self.classToPick[numberClass])
+			if i.isPlayer == False:
+				numberClass = int(random.uniform(0, len(self.classToPick)))
+				i.setClass(self.classToPick[numberClass])
+				self.classToPick.remove(self.classToPick[numberClass])
 		
 
-	def setPrivateTextChannel (self, channel, name):
+	async def setPrivateTextChannel (self, channel, name):
 		for i in self.listPlayers:
 			if i.name == name:
+				await channel.set_permissions(i.getID(), read_messages = True)
 				i.setPrivateTextChannel(channel)
 		self.privateTextChannels.append(channel)
 
-	def setPrivateVoiceChannel (self, channel, name):
+	async def setPrivateVoiceChannel (self, channel, name):
 		for i in self.listPlayers:
 			if i.name == name:
+				await channel.set_permissions(i.getID(), read_messages = True)
 				i.setPrivateVoiceChannel(channel)
 		self.privateVoiceChannels.append(channel)
 
@@ -193,4 +200,6 @@ class SecretMeeting:
 		self.other.getID().move_to(self.whoRoom.getPrivateVoiceChannel())
 		await asyncio.sleep(self.time)
 		self.whoRoom.occupied = False
+		self.other.getID().move_to(self.other.getPrivateVoiceChannel())
 		self.other.occupied = False
+		

@@ -105,13 +105,15 @@ async def reg (ctx, target):
 	
 	player = ctx.message.author
 
-	playerChooser = next([players for players in game.getListPlayers() if players.name == player])
-	playerChosen = next([players for players in game.getListPlayers() if players.name == target])
+	playerChooser = [players for players in game.getListPlayers() if players.name == player.name][0]
+	playerChosen = [players for players in game.getListPlayers() if players.name == target][0]
 
-	toDouble = next([players.other for players in game.secretMeetings if players.whoRoom == playerChosen])
-	if toDouble == playerChooser:
-		secret = next([secret for secret in game.secretMeetings if secret.whoRoom == playerChosen])
-		secret.double()
+	toDouble = [players.other for players in game.secretMeetings if players.whoRoom == playerChosen]
+
+	if len(toDouble) != 0 and toDouble[0] == playerChooser:
+		secret = [secret for secret in game.secretMeetings if secret.whoRoom == playerChosen]
+		if len(secret) != 0:
+			secret[0].double()
 	else:
 		secret = SecretMeeting(playerChooser, playerChosen)
 		game.secretMeetings.append(secret)
@@ -188,14 +190,15 @@ async def timeTable (ctx):
 				await j.getID().move_to(bigRoomV)
 			await asyncio.sleep(game.sleepTimeTable)
 			await bigRoomC.send(f"{game.getDays()[i]} Day <C> owns's room")
-			if i == 0:
-				game.setClasses()
-				for j in game.getListPlayers():
-					personRoom = game.getPrivateTextChannel(j.name)
-					await personRoom.send(f"Your [class] is [{j.gameClass}]")
+			
+			game.setClasses()
+			for j in game.getListPlayers():
+				personRoom = game.getPrivateTextChannel(j.name)
+				await personRoom.send(f"Your [class] is [{j.gameClass}]")
 
 			for j in game.getListPlayers():
 				personRoom = game.getPrivateTextChannel(j.name)
+				await j.getID().move_to(j.getPrivateVoiceChannel())
 				if j.getClass() == "Sorcerer":
 					if game.murderTarget is None:
 						await personRoom.send(f"No target has been selected for [Murder] yet.")
@@ -229,7 +232,7 @@ async def timeTable (ctx):
 					else:
 						await personRoom.send(f"Murder unavaiable")
 
-				await j.getID().move_to(j.getPrivateVoiceChannel())
+				
 
 			await asyncio.sleep(30)
 			
