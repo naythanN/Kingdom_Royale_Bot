@@ -171,7 +171,8 @@ async def timeTable (ctx):
 		if k != 0:
 			game.turnReset()
 			game.setPlayer()
-		for i in range(7):
+		day = 1
+		while (day <= 7) and (winning_conditions() == false):
 			game.secretMeetings.clear()
 			bigRoomC = game.getBigRoomChat()
 			bigRoomV = game.getBigRoomVoice()
@@ -259,6 +260,49 @@ async def timeTable (ctx):
 			
 			await asyncio.sleep(10)
 
+			day += 1
+
 
 client.run(token)
+
+def winning_conditions():
+    WCKing = False
+    WCPrince = False
+    WCDouble = False
+    WCKnight = False
+    WCRevolutionary = False
+
+    IsKingDead = False
+    IsPrinceDead = False
+    IsDoubleDead = False
+    IsKnightDead = False
+    IsRevolutionaryDead = False
+
+    for i in game.getListDeadPlayers():
+        if i.getClass() == "King":
+            IsKingDead = True
+        if i.getClass() == "Prince":
+            IsPrinceDead = True
+        if i.getClass() == "Double":
+            IsDoubleDead = True
+        if i.getClass() == "Knight":
+            IsKnightDead = True
+        if i.getClass() == "Revolutionary":
+            IsRevolutionaryDead = True
+
+    if (IsPrinceDead == True and IsRevolutionaryDead == True) or (IsKingDead == True):
+        WCKing = True
+    if (IsKingDead == True and IsDoubleDead == True and IsRevolutionaryDead == True) or (IsPrinceDead == True):
+        WCPrince = True
+    if (IsPrinceDead == True and IsRevolutionaryDead == True) or (IsDoubleDead == True):
+        WCDouble = True
+    if (IsKingDead == True and IsPrinceDead == True) or (IsKnightDead == True):
+        WCKnight = True
+    if (IsKingDead == True and IsPrinceDead == True and IsDoubleDead == True) or (IsRevolutionaryDead == True):
+        WCRevolutionary = True
+
+    if (WCKing == True) and (WCPrince == True) and (WCDouble == True) and (WCKnight == True) and (WCRevolutionary == True):
+        return True
+    else:
+        return False
 
