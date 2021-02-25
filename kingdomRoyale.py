@@ -132,6 +132,9 @@ class KingdomRoyale:
 	def getListPlayers(self) -> List[Player]:
 		return self.listPlayers
 
+	def getListDeadPlayers(self):
+		return self.listDeadPlayers
+
 	def getDays(self):
 		return self.days
 
