@@ -1,4 +1,5 @@
 import asyncio
+from asyncio.tasks import all_tasks
 from os import kill
 from typing import List
 from player import Player
@@ -101,6 +102,8 @@ class KingdomRoyale:
 		possiblePlayers[numberPlayer].setPlayer()
 		self.player = possiblePlayers[numberPlayer]
 
+		
+
 	def setClasses (self):
 		for i in self.listPlayers:
 			if i.isPlayer == False:
@@ -164,25 +167,75 @@ class KingdomRoyale:
 		classes = [classes.gameClass for classes in self.listPlayers]
 		if "King" in classes:
 			if self.substitutionUsed == True:
-				return next([players for players in self.listPlayers if players.gameClass == "Double"])
+				return next(players for players in self.listPlayers if players.gameClass == "Double")
 			else:
-				return next([players for players in self.listPlayers if players.gameClass == "King"])
+				return next(players for players in self.listPlayers if players.gameClass == "King")
 		elif "Double" in classes:
-			return next([players for players in self.listPlayers if players.gameClass == "Double"])
+			return next(players for players in self.listPlayers if players.gameClass == "Double")
 		elif "Prince" in classes:
-			return next([players for players in self.listPlayers if players.gameClass == "Prince"])
+			return next(players for players in self.listPlayers if players.gameClass == "Prince")
 		else:
 			return None
 
-	def makeSecretMeeting (self) -> None:
+	async def makeSecretMeeting (self) -> None:
+		
+		listTasks = []
+
 		for i in self.secretMeetings:
-			asyncio.create_task(i.arrange())
+			listTasks.append(asyncio.create_task(i.arrange()))
+		for j in listTasks:
+			await j
+
+
 
 	def getClass(self, gameClass) -> Player:
-		return next([players for players in self.listPlayers if players.gameClass == gameClass])
+		return next(players for players in self.listPlayers if players.gameClass == gameClass)
 
 	def makeTable (self):
 		pass
+
+	def winning_conditions(self):
+		WCKing = False
+		WCPrince = False
+		WCDouble = False
+		WCKnight = False
+		WCRevolutionary = False
+
+		IsKingDead = False
+		IsPrinceDead = False
+		IsDoubleDead = False
+		IsKnightDead = False
+		IsRevolutionaryDead = False
+
+		for i in self.getListDeadPlayers():
+			if i.getClass() == "King":
+				IsKingDead = True
+			if i.getClass() == "Prince":
+				IsPrinceDead = True
+			if i.getClass() == "Double":
+				IsDoubleDead = True
+			if i.getClass() == "Knight":
+				IsKnightDead = True
+			if i.getClass() == "Revolutionary":
+				IsRevolutionaryDead = True
+
+		if (IsPrinceDead == True and IsRevolutionaryDead == True) or (IsKingDead == True):
+			WCKing = True
+		if (IsKingDead == True and IsDoubleDead == True and IsRevolutionaryDead == True) or (IsPrinceDead == True):
+			WCPrince = True
+		if (IsPrinceDead == True and IsRevolutionaryDead == True) or (IsDoubleDead == True):
+			WCDouble = True
+		if (IsKingDead == True and IsPrinceDead == True) or (IsKnightDead == True):
+			WCKnight = True
+		if (IsKingDead == True and IsPrinceDead == True and IsDoubleDead == True) or (IsRevolutionaryDead == True):
+			WCRevolutionary = True
+
+		if (WCKing == True) and (WCPrince == True) and (WCDouble == True) and (WCKnight == True) and (WCRevolutionary == True):
+			print("retornei True")
+			return True
+		else:
+			print("Retornei false")
+			return False
 
 
 class SecretMeeting:
@@ -200,9 +253,9 @@ class SecretMeeting:
 			await asyncio.sleep(KingdomRoyale.secretMeetingTime)
 		self.whoRoom.occupied = True
 		self.other.occupied = True
-		self.other.getID().move_to(self.whoRoom.getPrivateVoiceChannel())
+		await self.other.getID().move_to(self.whoRoom.getPrivateVoiceChannel())
 		await asyncio.sleep(self.time)
 		self.whoRoom.occupied = False
-		self.other.getID().move_to(self.other.getPrivateVoiceChannel())
+		await self.other.getID().move_to(self.other.getPrivateVoiceChannel())
 		self.other.occupied = False
 		
