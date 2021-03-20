@@ -31,10 +31,10 @@ class Player:
 	def setPrivateVoiceChannel (self, channel):
 		self.privateVoiceChannel = channel
 
-	def getPrivateTextChannel (self):
+	def getPrivateTextChannel (self) -> discord.guild.TextChannel:
 		return self.privateTextChannel
 
-	def getPrivateVoiceChannel (self):
+	def getPrivateVoiceChannel (self) -> discord.guild.VoiceChannel:
 		return self.privateVoiceChannel
 
 	def getName(self):

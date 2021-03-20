@@ -35,17 +35,15 @@ class KingdomRoyale:
 
 		
 
-	def sorcery (self, killer):
+	async def sorcery (self, killer):
 		yield
-		if self.murderTarget.gameClass != "Prince":
+		if self.murderTarget.gameClass != "Prince" and self.murderTarget is not None:
 
-			self.murderTarget.life = 0
-			self.murderTarget.status = "Dead"
 			self.murderTarget.deathCause = "Burnt to Death by [Sorcery]"
 			
 			self.murderTarget.killer.append(killer)
 
-			self.listPlayers.remove(self.murderTarget)
+			await self.makeDead(self.murderTarget)
 
 		yield
 
@@ -61,35 +59,41 @@ class KingdomRoyale:
 		self.secretMeetings : List[SecretMeeting] = []
 		self.secretMeetingTime : int = 10
 	
-	def murder (self, target):
+	async def murder (self, target):
 		playerTarget = next(player for player in self.listPlayers if player.name == target)
 		self.murderTarget = playerTarget
 		self.murderTarget.killer.append(self.getMurderUser())
-
+		sorcerer = self.getClass("Sorcerer")
+		if sorcerer is not None:
+			await sorcerer.getPrivateTextChannel().send(f"Will you burn [{self.murderTarget.getName()}] to death by using [Sorcery]?")
+		knight = self.getClass("Knight")
+		if knight is not None:
+			await knight.getPrivateTextChannel().send(f"Do you want to kill [{self.murderTarget.getName()}] by using [Deathblow]?")
 	
-	def assassination (self, target):
+	async def assassination (self, target):
 		yield
 		playerTarget = next(player for player in self.listPlayers if player.name == target)
-		if playerTarget.gameClass == "King" and self.substituionUsed == True:
-			self.murderTarget = self.getClass("Double")
-		else:
-			self.murderTarget = playerTarget
-		self.murderTarget.killer.append(self.getClass("Revolutionary"))
+		if playerTarget.gameClass == "King" and self.substitutionUsed == True and self.getClass("Double") is not None and self.getClass("Double").status == "Alive":
+			playerTarget = self.getClass("Double")
+
+		playerTarget.killer.append(self.getClass("Revolutionary"))
+		await self.makeDead(playerTarget)
 		yield
 
-	def deathblow (self, killer):
+	async def deathblow (self, killer):
 		yield
-		self.murderTarget.life = 0
-		self.murderTarget.status = "Dead"
-		self.murderTarget.deathCause = "Death by [Deathblow]"
-		
-		self.murderTarget.killer.append(killer)
+		if self.getClass("Sorcerer") is None and self.murderTarget is not None:
 
-		self.listPlayers.remove(self.murderTarget)
+			self.murderTarget.deathCause = "Death by [Deathblow]"
+			
+			self.murderTarget.killer.append(killer)
+
+			#self.listPlayers.remove(self.murderTarget)
+			await self.makeDead(self.murderTarget)
 		yield
 
 	def substitution(self):
-		self.substituionUsed = True
+		self.substitutionUsed = True
 		self.canUseSubstitution = False
 
 	def addPlayer (self, id):
@@ -186,13 +190,26 @@ class KingdomRoyale:
 		for j in listTasks:
 			await j
 
-
+	async def strike (self, target) -> None:
+		playerTarget = next(player for player in self.listPlayers if player.name == target)
+		playerTarget.life -= 1
+		if playerTarget.life <= 0:
+			await self.makeDead(playerTarget)
 
 	def getClass(self, gameClass) -> Player:
 		return next(players for players in self.listPlayers if players.gameClass == gameClass)
 
 	def makeTable (self):
 		pass
+
+	async def makeDead(self, dead: Player):
+		dead.status = "Dead"
+		dead.life = 0
+		await dead.getPrivateTextChannel().delete()
+		await dead.getPrivateVoiceChannel().delete()
+		self.listPlayers.remove(dead)
+		self.listDeadPlayers.append(dead)
+		
 
 	def winning_conditions(self):
 		WCKing = False
