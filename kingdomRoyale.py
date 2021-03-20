@@ -48,6 +48,7 @@ class KingdomRoyale:
 		yield
 
 	def turnReset (self):
+		self.listPlayers.extend(self.listDeadPlayers)
 		self.listDeadPlayers = []
 		self.avaiableClasses = ["King", "Prince", "Double", "Revolutionary", "Sorcerer", "Knight"]
 		self.classToPick = ["King", "Prince", "Double", "Revolutionary", "Sorcerer", "Knight"]

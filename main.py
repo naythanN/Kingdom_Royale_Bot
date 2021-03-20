@@ -62,7 +62,7 @@ async def Strike (ctx, target):
     player = ctx.message.author
     for i in game.getListPlayers():
         if i.getID() == player and i.strike == True:
-            await game.strike(i)
+            await game.strike(target)
             return
     game.getPrivateTextChannel(player.name).send("Sorcery unavaiable")
 
@@ -281,7 +281,7 @@ async def timeTable (ctx):
                     await personRoom.send(f"Please select a target for [Assassination]")
                 await j.getID().move_to(j.getPrivateVoiceChannel())
             
-            time.sleep(game.sleepTimeTable)
+            await asyncio.sleep(game.sleepTimeTable)
             for j in game.actions:
                 #next(j)
                 #next(j)
