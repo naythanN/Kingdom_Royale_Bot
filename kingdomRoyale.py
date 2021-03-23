@@ -34,7 +34,7 @@ class SecretMeeting:
             await asyncio.sleep(1)
         self.whoRoom.occupied = True
         self.other.occupied = True
-        bigRoom.send(f"[{self.whoRoom.name}]       ->     [{self.other.name}]")
+        await bigRoom.send(f"[{self.whoRoom.name}]       ->     [{self.other.name}]")
         await asyncio.sleep(1)
         self.whoRoom.occupied = False
     
@@ -71,7 +71,7 @@ class KingdomRoyale:
         self.guild = None
         self.currentDay = "First"
         self.victoryConditions = {
-            "King"          :   ["Prince","Revolutionary"],
+            "King"          : ["Prince","Revolutionary"],
             "Prince"        : ["King", "Double", "Revolutionary"],
             "Double"        : ["Prince", "Revolutionary"],
             "Sorcerer"      : [],
@@ -89,7 +89,7 @@ class KingdomRoyale:
             killer.listKilled.append(f"killed {self.murderTarget.name} using [Sorcery] on the {self.currentDay} day.")
             self.getMurderUser().listKilled.append(f"killed {self.murderTarget} on the {self.currentDay} day by selecting him as the target of [Murder].")
             self.murderTarget.killer.append(killer)
-            self.getBigRoomChat().send(f"[{self.murderTarget.name}], burnt to death by [Sorcery]")
+            await self.getBigRoomChat().send(f"[{self.murderTarget.name}], burnt to death by [Sorcery]")
             await self.makeDead(self.murderTarget)
 
         yield
@@ -126,11 +126,12 @@ class KingdomRoyale:
     async def murder (self, target):
         playerTarget = next(player for player in self.listPlayers if player.name == target)
         self.murderTarget = playerTarget
-        self.murderTarget.killer.append(self.getMurderUser())
+        #self.murderTarget.killer.append(self.getMurderUser())
         sorcerer = self.getClass("Sorcerer")
         if sorcerer is not None:
             await sorcerer.getPrivateTextChannel().send(f"Will you burn [{self.murderTarget.getName()}] to death by using [Sorcery]?")
         knight = self.getClass("Knight")
+        
         if knight is not None and sorcerer is None:
             await knight.getPrivateTextChannel().send(f"Do you want to kill [{self.murderTarget.getName()}] by using [Deathblow]?")
     
@@ -143,7 +144,7 @@ class KingdomRoyale:
         playerTarget.killer.append(self.getClass("Revolutionary"))
         self.getClass("Revolutionary").listKilled.append(f"killed {target} using [Assassination] on the {self.currentDay} day.")
         await self.makeDead(playerTarget)
-        self.getBigRoomChat().send(f"[{target}] was strangulated by [Assassination]")
+        await self.getBigRoomChat().send(f"[{target}] was strangulated by [Assassination]")
         yield
 
     async def deathblow (self, killer : Player):
@@ -155,7 +156,7 @@ class KingdomRoyale:
             self.murderTarget.deathCause = f"killed on the {self.currentDay} day by {self.getMurderUser().name} and {killer.name}'s [Deathblow]"
             
             self.murderTarget.killer.append(killer)
-            self.getBigRoomChat().send(f"[{self.murderTarget.name}], death by [Deathblow]")
+            await self.getBigRoomChat().send(f"[{self.murderTarget.name}], death by [Deathblow]")
             #self.listPlayers.remove(self.murderTarget)
             await self.makeDead(self.murderTarget)
         yield
@@ -257,7 +258,7 @@ class KingdomRoyale:
         
         listTasks = []
         listMeetings = []
-        self.getBigRoomChat().send("Secret Meetings")
+        await self.getBigRoomChat().send("Secret Meetings")
 
         for i in self.secretMeetings:
             listMeetings.append(asyncio.create_task(i.makeTable(self.getBigRoomChat())))
@@ -282,7 +283,7 @@ class KingdomRoyale:
             await self.makeDead(playerTarget)
 
     def canStrike(self, striker: Player, striked: Player) -> bool:
-        if striker.strike == True and striked.status == "Alive":
+        if striker.strike == True and striked.status == "Alive" and (striker.pair != striked or striker.isPlayer == True):
             if self.currentBlock == "B" or self.currentBlock == "D":
                 return True
             elif self.currentBlock == "C":
@@ -292,8 +293,14 @@ class KingdomRoyale:
         return False
 
     def getClass(self, gameClass) -> Player:
-        return next(players for players in self.listPlayers if players.gameClass == gameClass)
+        listP = [players for players in self.listPlayers if players.gameClass == gameClass]
+        if len(listP) > 0:
+            return listP[0]
 
+    def getClassDead(self, gameClass) -> Player:
+        listP = [players for players in self.listDeadPlayers if players.gameClass == gameClass]
+        if len(listP) > 0:
+            return listP[0]
     async def makeDead(self, dead: Player):
         dead.status = "Dead"
         dead.life = 0
@@ -304,9 +311,9 @@ class KingdomRoyale:
         
     def makePairs (self):
         numberOfPairs = 0
-        for i in self.listPlayers and numberOfPairs < 2:
-            if i.pair == "":
-                possiblePair = [j for j in self.listPlayers if j.pair == ""]
+        for i in self.listPlayers:
+            if i.pair is None and numberOfPairs < 2:
+                possiblePair = [j for j in self.listPlayers if j.pair is None and j != i]
                 if possiblePair.__len__() > 0:
                     numberPlayer = int(random.uniform(0, len(possiblePair)))
                     possiblePair[numberPlayer].pair = i
@@ -317,31 +324,32 @@ class KingdomRoyale:
         bigRoom = self.getBigRoomChat()
         await bigRoom.send ("********** GAME OVER ***********")
         await bigRoom.send("Winners")
-        
+        string = ""
         for i in self.listPlayers:
             if i.diedAsPlayer == False:
                 i.score += 1
-            await bigRoom.send(f'[{i.name}] {"(Player)" if i.isPlayer else ""}')
-            await bigRoom.send(f'[{i.gameClass}] score = {i.score}', end=" ")
+            string += f'[{i.name}] {"(Player)" if i.isPlayer else ""}\n'
+            string += f'[{i.gameClass}] score = {i.score}\n'
             for j in i.listKilled:
-                await bigRoom.send(j)
-            await bigRoom.send("Alive.")
-            await bigRoom.send("* Victory conditions have been met due to", end="")
+                string += j
+            string += "\nAlive.\n"
+            string += "\n* Victory conditions have been met due to"
             for j in self.victoryConditions[i.gameClass]:
-                await bigRoom.send (self.getClass(j).name, end=", ")
-            await bigRoom.send("'s death.")
+                string += self.getClassDead(j).name
+            string += ("'s death.\n")
             
-        await bigRoom.send ("Loosers")
+        string +=  ("Loosers\n")
         for i in self.listDeadPlayers:
             if i.isPlayer:
                 i.score = 0
                 i.diedAsPlayer = True
-            await bigRoom.send(f'[{i.name}] {"(Player)" if i.isPlayer else ""}')
-            await bigRoom.send(f'[{i.gameClass}] score = {i.score}')
+            string += f'[{i.name}] {"(Player)" if i.isPlayer else ""}\n'
+            string += f'[{i.gameClass}] score = {i.score}\n'
             for j in i.listKilled:
-                await bigRoom.send (j)
-            await bigRoom.send(i.deathCause)
-
+                string +=  (j)
+            string += i.deathCause
+        await bigRoom.send(string)
+        
     async def winning_conditions(self):
         WCKing = False
         WCPrince = False
@@ -355,6 +363,21 @@ class KingdomRoyale:
         IsKnightDead = False
         IsRevolutionaryDead = False
 
+
+        if self.currentDay != "First":
+            for i in self.classToPick:
+                if i == "King":
+                    IsKingDead = True
+                if i == "Prince":
+                    IsPrinceDead = True
+                if i == "Knight":
+                    IsKnightDead = True
+                if i == "Revolutionary":
+                    IsRevolutionaryDead = True
+                if i == "Double":
+                    IsDoubleDead = True
+
+        
         for i in self.getListDeadPlayers():
             if i.getClass() == "King":
                 IsKingDead = True

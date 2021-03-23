@@ -43,7 +43,7 @@ async def reset (ctx):
 
 
 
-@client.command(name = "cleanMess")
+@client.command(name = "cleanMes")
 async def cleanMess (ctx):
     thisServer = ctx.message.guild
     for i in thisServer.channels:
@@ -68,7 +68,7 @@ async def Strike (ctx, target):
                 return
             else:
                 i.getID().send("The target does not exist or is already dead.")
-    game.getPrivateTextChannel(player.name).send("Strike unavaiable")
+    await game.getPrivateTextChannel(player.name).send("Strike unavaiable")
 
 @client.command(name = "Sorcery")
 async def Sorcery (ctx):
@@ -81,7 +81,7 @@ async def Sorcery (ctx):
             elif game.murderTarget is not None and game.murderTarget.pair == i and i.isPlayer == False:
                 i.getID().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
 
-    game.getPrivateTextChannel(player.name).send("Sorcery unavaiable")
+    await game.getPrivateTextChannel(player.name).send("Sorcery unavaiable")
 
 @client.command(name = "Deathblow")
 async def Deathblow (ctx):
@@ -238,8 +238,8 @@ async def timeTable (ctx):
 
             for j in game.getListPlayers():
                 j.life += 1
-                if j.life > len(game.getListPlayers) - 1:
-                    j.life = len(game.getListPlayers) - 1
+                if j.life > len(game.getListPlayers()) - 1:
+                    j.life = len(game.getListPlayers()) - 1
                 j.strike = True
                 personRoom = game.getPrivateTextChannel(j.name)
                 await personRoom.send(f"{game.getDays()[i]} Day <A> [{j.name}]'s room")
@@ -333,6 +333,7 @@ async def timeTable (ctx):
                 await j.__anext__()
             i += 1
             game.actions.clear()
+            
             game.murderTarget = None
             game.substitutionUsed = False
 
