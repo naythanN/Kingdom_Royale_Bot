@@ -52,6 +52,7 @@ class KingdomRoyale:
         self.privateVoiceChannels = []
         self.pastPlayers = []
         self.bigRoomV = None
+        self.graveyard = None
         self.taskTimeTable = None
         self.bigRoomC = None
         self.avaiableClasses = ["King", "Prince", "Double", "Revolutionary", "Sorcerer", "Knight"]
@@ -306,7 +307,7 @@ class KingdomRoyale:
     async def makeDead(self, dead: Player):
         dead.status = "Dead"
         dead.life = 0
-        await dead.getID().move_to(dead.getPrivateVoiceChannel())
+        await dead.getID().move_to(self.graveyard)
         await dead.getPrivateTextChannel().delete()
         await dead.getPrivateVoiceChannel().delete()
         self.listPlayers.remove(dead)

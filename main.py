@@ -210,6 +210,7 @@ async def start (ctx):
 
     game.setBigRoomV (await guild.create_voice_channel("Big Room"))
     game.setBigRoomC (await guild.create_text_channel("Big Room"))
+    game.graveyard = await guild.create_voice_channel("Graveyard")
     game.setPlayer()
 
 
@@ -251,6 +252,8 @@ async def timeTable (ctx):
 
             await asyncio.sleep(game.sleepTimeTable)
             game.currentBlock = "B"
+            if i == 0:
+                game.setClasses()
             await bigRoomC.send(f"{game.getDays()[i]} Day <B> Big room")
             for j in game.getListPlayers():
                 await j.getID().move_to(bigRoomV)
@@ -262,7 +265,7 @@ async def timeTable (ctx):
             game.currentBlock = "C"
             await bigRoomC.send(f"{game.getDays()[i]} Day <C> owns's room")
             if i == 0:
-                game.setClasses()
+                
                 for j in game.getListPlayers():
                     personRoom = game.getPrivateTextChannel(j.name)
                     await personRoom.send(f"Your [class] is [{j.gameClass}]")
