@@ -130,21 +130,31 @@ Each class has its own specific skill.
 
 #### [Player]
 
+
+
 The [Player] works as follows: he can choose his own class with a restriction that will increase according to the number of the round. In the first round, whether N is initially the number of rounds de nido, the [Player] may choose between 6 - N classes, the others will be blocked from the choice by voting by the players. In addition, the [Player] will have an increased score according to the implementation of points. For now, it will be raffled and cannot be twice in a row.
 
 ##### Stab system
+
+
 
 To increase the likelihood, a stabbing system was added. Each person can stab a day. The person has at most the number of players alive - 1 lives. Each day the person regains 1 life.
 
 ##### Rounds
 
+
+
 The number of rounds must be agreed in advance. During the rounds players will be able to accumulate points, the ranking will be made from those accumulated points. The maximum number of rounds should be 6 and preferably greater than or equal to 3.
 
 ##### Score
 
+
+
 The score system is simple, if you win, you gain one point, with you lose, nothing happens, unless you are the Player, than you lose everything.
 
 ##### Modes
+
+
 
 Kingdom Royale can be played in two formats: two doubles and two solos or all solos. In the case of pairs, they cannot betray each other, unless one of them is [Player]. If 7 days pass, everyone wins (except for the [Player]).
 
