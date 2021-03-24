@@ -67,8 +67,8 @@ async def Strike (ctx, target):
                 await game.strike(i, target)
                 return
             else:
-                i.getID().send("The target does not exist or is already dead.")
-    await game.getPrivateTextChannel(player.name).send("Strike unavaiable")
+                await i.getID().send("The target does not exist or is already dead.")
+    await game.getPrivateTextChannel(player.name).send("Strike unavailable")
 
 @client.command(name = "Sorcery")
 async def Sorcery (ctx):
@@ -79,9 +79,9 @@ async def Sorcery (ctx):
                 game.actions.append(game.sorcery(i))
                 return                
             elif game.murderTarget is not None and game.murderTarget.pair == i and i.isPlayer == False:
-                i.getID().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
+                await i.getID().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
 
-    await game.getPrivateTextChannel(player.name).send("Sorcery unavaiable")
+    await game.getPrivateTextChannel(player.name).send("Sorcery unavailable")
 
 @client.command(name = "Deathblow")
 async def Deathblow (ctx):
@@ -94,7 +94,7 @@ async def Deathblow (ctx):
                 
             elif game.murderTarget is not None and game.murderTarget.pair == i and i.isPlayer == False:
                 i.getID().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
-    await game.getPrivateTextChannel(player.name).send("Deathblow unavaiable")
+    await game.getPrivateTextChannel(player.name).send("Deathblow unavailable")
 
 @client.command(name = "Murder")
 async def Murder (ctx, target):
@@ -103,13 +103,13 @@ async def Murder (ctx, target):
         if i.getID() == player and i == game.getMurderUser() and game.currentBlock == "C":
             if game.getPlayer(target) is not None:
                 if game.getPlayer(target).pair == i and i.isPlayer == False:
-                    i.getID().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
+                    await i.getID().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
                 else:
                     await game.murder(target)
                     return
             else:
-                i.getID().send("The target does not exist or is already dead.")
-    await game.getPrivateTextChannel(player.name).send("Murder unavaiable")
+                await i.getID().send("The target does not exist or is already dead.")
+    await game.getPrivateTextChannel(player.name).send("Murder unavailable")
 
 @client.command(name = "Substitution")
 async def Substitution (ctx):
@@ -118,7 +118,7 @@ async def Substitution (ctx):
         if i.getID() == player and i.getClass() == "King" and game.canUseSubstitution == True and game.currentBlock == "C":
             game.substitution()
             return
-    await game.getPrivateTextChannel(player.name).send("Substitution unavaiable")
+    await game.getPrivateTextChannel(player.name).send("Substitution unavailable")
 
 @client.command(name = "Assassination")
 async def Assassination (ctx, target):
@@ -127,13 +127,13 @@ async def Assassination (ctx, target):
         if i.getID() == player and i.getClass() == "Revolutionary" and game.currentBlock == "E":
             if game.getPlayer(target) is not None:
                 if game.getPlayer(target).pair == i and i.isPlayer == False:
-                    i.getID().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
+                    await i.getID().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
                 else:
                     game.actions.append(game.assassination(target))
                     return
             else:
-                i.getID().send("The target does not exist or is already dead.")
-    await game.getPrivateTextChannel(player.name).send("Assassination unavaiable")
+                await i.getID().send("The target does not exist or is already dead.")
+    await game.getPrivateTextChannel(player.name).send("Assassination unavailable")
 
 @client.command(name = "reg")
 async def reg (ctx):
@@ -221,12 +221,12 @@ async def timeTable (ctx):
     await ctx.send("Welcome to Kingdom Royale! Hehe")
     for k in range(6):
         if k != 0:
-            game.turnReset()
+            await game.turnReset()
             game.setPlayer()
         i = 0
         if game.mode == "Pairs":
             game.makePairs()
-        while i < 7 and await game.winning_conditions() == False:
+        while i < 7:
             print("pau")
             game.secretMeetings.clear()
             bigRoomC = game.getBigRoomChat()
@@ -244,7 +244,7 @@ async def timeTable (ctx):
                 personRoom = game.getPrivateTextChannel(j.name)
                 await personRoom.send(f"{game.getDays()[i]} Day <A> [{j.name}]'s room")
                 if i == 0 and j.pair is not None:
-                    await personRoom.send(f"Your dead friend {j.pair.name} is also in the game, you wouldn't want anything bad to happen to him right?")
+                    await personRoom.send(f"Your dear friend {j.pair.name} is also in the game, you wouldn't want anything bad to happen to him right?")
                 if j.isPlayer == True and i == 0:
                     await personRoom.send(f"Gufufu - PleaSed to - meEt you - {j.name}-kun - Alright - you wiLl now - select yOur [class]")
                 await j.getID().move_to(j.getPrivateVoiceChannel())
@@ -255,6 +255,10 @@ async def timeTable (ctx):
             for j in game.getListPlayers():
                 await j.getID().move_to(bigRoomV)
             await asyncio.sleep(game.sleepTimeTable)
+
+            if await game.winning_conditions() == True:
+                break
+
             game.currentBlock = "C"
             await bigRoomC.send(f"{game.getDays()[i]} Day <C> owns's room")
             if i == 0:
@@ -289,13 +293,13 @@ async def timeTable (ctx):
                     if j == game.getMurderUser():
                         await personRoom.send(f"Please select a target for [Murder]")
                     else:
-                        await personRoom.send(f"Murder unavaiable")
+                        await personRoom.send(f"Murder unavailable")
                 if j.getClass() == "Double":
                     classes = [classes.gameClass for classes in game.getListPlayers()]
                     if j == game.getMurderUser():
                         await personRoom.send(f"Please select a target for [Murder]")
                     else:
-                        await personRoom.send(f"Murder unavaiable")
+                        await personRoom.send(f"Murder unavailable")
  
                 
             print("vou esperar")
@@ -310,12 +314,20 @@ async def timeTable (ctx):
                 await j.__anext__()
                 await j.__anext__()
             game.actions.clear()
+
+            if await game.winning_conditions() == True:
+                break
+
             game.currentBlock = "D"
             await bigRoomC.send(f"{game.getDays()[i]} Day <D> Big room")
             for j in game.getListPlayers():
                 await j.getID().move_to(bigRoomV)
 
             await asyncio.sleep(game.sleepTimeTable) 
+
+            if await game.winning_conditions() == True:
+                break
+
             game.currentBlock = "E"
             await bigRoomC.send(f"{game.getDays()[i]} Day <E> owns's room")
 
@@ -336,6 +348,8 @@ async def timeTable (ctx):
             
             game.murderTarget = None
             game.substitutionUsed = False
+            if await game.winning_conditions() == True:
+                break
 
 
 client.run(token)

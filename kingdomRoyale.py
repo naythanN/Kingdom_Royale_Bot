@@ -85,9 +85,9 @@ class KingdomRoyale:
         yield
         if self.murderTarget.gameClass != "Prince" and self.murderTarget is not None:
 
-            self.murderTarget.deathCause = f"killed on the {self.currentDay} day by {self.getMurderUser().name} and {killer.name}'s [Sorcery]"
-            killer.listKilled.append(f"killed {self.murderTarget.name} using [Sorcery] on the {self.currentDay} day.")
-            self.getMurderUser().listKilled.append(f"killed {self.murderTarget} on the {self.currentDay} day by selecting him as the target of [Murder].")
+            self.murderTarget.deathCause = f"Killed on the {self.currentDay} day by {self.getMurderUser().name} and {killer.name}'s [Sorcery]"
+            killer.listKilled.append(f"Killed {self.murderTarget.name} using [Sorcery] on the {self.currentDay} day. ")
+            self.getMurderUser().listKilled.append(f"Killed {self.murderTarget.name} on the {self.currentDay} day by selecting him as the target of [Murder]. ")
             self.murderTarget.killer.append(killer)
             await self.getBigRoomChat().send(f"[{self.murderTarget.name}], burnt to death by [Sorcery]")
             await self.makeDead(self.murderTarget)
@@ -98,21 +98,23 @@ class KingdomRoyale:
         for i in self.listDeadPlayers:
             i.life = 5
             i.status = "Alive"
+            i.deathCause = ""
+
+        for i in self.listPlayers:
+            await i.getPrivateTextChannel().delete()
+            await i.getPrivateVoiceChannel().delete()
+        
         self.listPlayers.extend(self.listDeadPlayers)
         self.listDeadPlayers = []
-        for i in self.getAllPrivateTextChannels():
-            await i.delete()
-        for i in self.getAllPrivateVoiceChannels():
-            await i.delete()
         
         for i in self.getListPlayers():
             overwrites = {
                 self.guild.default_role : discord.PermissionOverwrite(read_messages=False),
                 self.guild.me: discord.PermissionOverwrite(read_messages=True)
             }
-        await self.setPrivateTextChannel(await self.guild.create_text_channel(i.name + "'s room", overwrites = overwrites), i.name)
+            await self.setPrivateTextChannel(await self.guild.create_text_channel(i.name + "'s room", overwrites = overwrites), i.name)
 
-        await self.setPrivateVoiceChannel(await self.guild.create_voice_channel(i.name + "'s room", overwrites = overwrites), i.name)
+            await self.setPrivateVoiceChannel(await self.guild.create_voice_channel(i.name + "'s room", overwrites = overwrites), i.name)
         self.avaiableClasses = ["King", "Prince", "Double", "Revolutionary", "Sorcerer", "Knight"]
         self.classToPick = ["King", "Prince", "Double", "Revolutionary", "Sorcerer", "Knight"]
         self.player = None
@@ -140,9 +142,9 @@ class KingdomRoyale:
         playerTarget = next(player for player in self.listPlayers if player.name == target)
         if playerTarget.gameClass == "King" and self.substitutionUsed == True and self.getClass("Double") is not None and self.getClass("Double").status == "Alive":
             playerTarget = self.getClass("Double")
-        playerTarget.deathCause = f"killed on the {self.currentDay} day by {self.getClass('Revolutionary').name}'s [Assassination]"
+        playerTarget.deathCause = f"Killed on the {self.currentDay} day by {self.getClass('Revolutionary').name}'s [Assassination]. "
         playerTarget.killer.append(self.getClass("Revolutionary"))
-        self.getClass("Revolutionary").listKilled.append(f"killed {target} using [Assassination] on the {self.currentDay} day.")
+        self.getClass("Revolutionary").listKilled.append(f"Killed {target} using [Assassination] on the {self.currentDay} day. ")
         await self.makeDead(playerTarget)
         await self.getBigRoomChat().send(f"[{target}] was strangulated by [Assassination]")
         yield
@@ -151,9 +153,9 @@ class KingdomRoyale:
         yield
         if self.getClass("Sorcerer") is None and self.murderTarget is not None and self.murderTarget in self.listPlayers:
 
-            killer.listKilled.append(f"killed {self.murderTarget.name} using [Deathblow] on the {self.currentDay} day.")
-            self.getMurderUser().listKilled.append(f"killed {self.murderTarget} on the {self.currentDay} day by selecting him as the target of [Murder].")
-            self.murderTarget.deathCause = f"killed on the {self.currentDay} day by {self.getMurderUser().name} and {killer.name}'s [Deathblow]"
+            killer.listKilled.append(f"Killed {self.murderTarget.name} using [Deathblow] on the {self.currentDay} day. ")
+            self.getMurderUser().listKilled.append(f"Killed {self.murderTarget.name} on the {self.currentDay} day by selecting him as the target of [Murder]. ")
+            self.murderTarget.deathCause = f"Killed on the {self.currentDay} day by {self.getMurderUser().name} and {killer.name}'s [Deathblow]. "
             
             self.murderTarget.killer.append(killer)
             await self.getBigRoomChat().send(f"[{self.murderTarget.name}], death by [Deathblow]")
@@ -276,14 +278,14 @@ class KingdomRoyale:
         if self.currentBlock == "B" or self.currentBlock == "D":
             await self.getBigRoomChat().send(f"[{target}] has been striked by {striker.name}.")
         if playerTarget.life <= 0:
-            playerTarget.deathCause = f"killed directly on the {self.currentDay} day by {striker.name}."
+            playerTarget.deathCause = f"Killed directly on the {self.currentDay} day by {striker.name}."
             
-            striker.listKilled.append(f"killed {target} directly on the {self.currentDay} day.")
+            striker.listKilled.append(f"Killed {target} directly on the {self.currentDay} day.")
             await self.getBigRoomChat().send(f"[{target}] has bleed to death")
             await self.makeDead(playerTarget)
 
     def canStrike(self, striker: Player, striked: Player) -> bool:
-        if striker.strike == True and striked.status == "Alive" and (striker.pair != striked or striker.isPlayer == True):
+        if striked is not None and striker.strike == True and striked.status == "Alive" and (striker.pair != striked or striker.isPlayer == True):
             if self.currentBlock == "B" or self.currentBlock == "D":
                 return True
             elif self.currentBlock == "C":
@@ -304,6 +306,7 @@ class KingdomRoyale:
     async def makeDead(self, dead: Player):
         dead.status = "Dead"
         dead.life = 0
+        await dead.getID().move_to(dead.getPrivateVoiceChannel())
         await dead.getPrivateTextChannel().delete()
         await dead.getPrivateVoiceChannel().delete()
         self.listPlayers.remove(dead)
@@ -322,34 +325,37 @@ class KingdomRoyale:
 
     async def display (self):
         bigRoom = self.getBigRoomChat()
-        await bigRoom.send ("********** GAME OVER ***********")
-        await bigRoom.send("Winners")
+        await bigRoom.send ("\n********** GAME OVER ***********")
+        await bigRoom.send("\nWinners")
         string = ""
         for i in self.listPlayers:
             if i.diedAsPlayer == False:
                 i.score += 1
-            string += f'[{i.name}] {"(Player)" if i.isPlayer else ""}\n'
+            string += f'\n[{i.name}] {"(Player)" if i.isPlayer else ""}\n'
             string += f'[{i.gameClass}] score = {i.score}\n'
             for j in i.listKilled:
                 string += j
-            string += "\nAlive.\n"
-            string += "\n* Victory conditions have been met due to"
+            string += " Alive.\n"
+            string += "* Victory conditions have been met due to "
             for j in self.victoryConditions[i.gameClass]:
-                string += self.getClassDead(j).name
+                if self.getClassDead(j).gameClass == "Sorcerer":
+                    string += " them surving."
+                else:
+                    string += f"{self.getClassDead(j).name} ,"
             string += ("'s death.\n")
             
-        string +=  ("Loosers\n")
+        string +=  ("\nLoosers")
         for i in self.listDeadPlayers:
             if i.isPlayer:
                 i.score = 0
                 i.diedAsPlayer = True
-            string += f'[{i.name}] {"(Player)" if i.isPlayer else ""}\n'
+            string += f'\n[{i.name}] {"(Player)" if i.isPlayer else ""}\n'
             string += f'[{i.gameClass}] score = {i.score}\n'
             for j in i.listKilled:
                 string +=  (j)
             string += i.deathCause
         await bigRoom.send(string)
-        
+
     async def winning_conditions(self):
         WCKing = False
         WCPrince = False
@@ -362,20 +368,6 @@ class KingdomRoyale:
         IsDoubleDead = False
         IsKnightDead = False
         IsRevolutionaryDead = False
-
-
-        if self.currentDay != "First":
-            for i in self.classToPick:
-                if i == "King":
-                    IsKingDead = True
-                if i == "Prince":
-                    IsPrinceDead = True
-                if i == "Knight":
-                    IsKnightDead = True
-                if i == "Revolutionary":
-                    IsRevolutionaryDead = True
-                if i == "Double":
-                    IsDoubleDead = True
 
         
         for i in self.getListDeadPlayers():
