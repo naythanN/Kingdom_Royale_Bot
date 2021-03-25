@@ -43,7 +43,7 @@ async def reset (ctx):
 
 
 
-@client.command(name = "cleanMes")
+@client.command(name = "cleanMess")
 async def cleanMess (ctx):
     thisServer = ctx.message.guild
     for i in thisServer.channels:
@@ -79,7 +79,7 @@ async def Sorcery (ctx):
                 game.actions.append(game.sorcery(i))
                 return                
             elif game.murderTarget is not None and game.murderTarget.pair == i and i.isPlayer == False:
-                await i.getID().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
+                await i.getPrivateTextChannel().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
 
     await game.getPrivateTextChannel(player.name).send("Sorcery unavailable")
 
@@ -93,7 +93,7 @@ async def Deathblow (ctx):
                 return
                 
             elif game.murderTarget is not None and game.murderTarget.pair == i and i.isPlayer == False:
-                i.getID().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
+                i.getPrivateTextChannel().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
     await game.getPrivateTextChannel(player.name).send("Deathblow unavailable")
 
 @client.command(name = "Murder")
@@ -103,7 +103,7 @@ async def Murder (ctx, target):
         if i.getID() == player and i == game.getMurderUser() and game.currentBlock == "C":
             if game.getPlayer(target) is not None:
                 if game.getPlayer(target).pair == i and i.isPlayer == False:
-                    await i.getID().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
+                    await i.getPrivateTextChannel().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
                 else:
                     await game.murder(target)
                     return
@@ -117,6 +117,7 @@ async def Substitution (ctx):
     for i in game.getListPlayers():
         if i.getID() == player and i.getClass() == "King" and game.canUseSubstitution == True and game.currentBlock == "C":
             game.substitution()
+            await game.getPlayer("Double").getPrivateTextChannel().send(f"Please select a target for [Murder]")
             return
     await game.getPrivateTextChannel(player.name).send("Substitution unavailable")
 
@@ -127,7 +128,7 @@ async def Assassination (ctx, target):
         if i.getID() == player and i.getClass() == "Revolutionary" and game.currentBlock == "E":
             if game.getPlayer(target) is not None:
                 if game.getPlayer(target).pair == i and i.isPlayer == False:
-                    await i.getID().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
+                    await i.getPrivateTextChannel().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
                 else:
                     game.actions.append(game.assassination(target))
                     return
@@ -228,7 +229,6 @@ async def timeTable (ctx):
         if game.mode == "Pairs":
             game.makePairs()
         while i < 7:
-            print("pau")
             game.secretMeetings.clear()
             bigRoomC = game.getBigRoomChat()
             bigRoomV = game.getBigRoomVoice()
@@ -257,7 +257,7 @@ async def timeTable (ctx):
             await bigRoomC.send(f"{game.getDays()[i]} Day <B> Big room")
             for j in game.getListPlayers():
                 await j.getID().move_to(bigRoomV)
-            await asyncio.sleep(game.sleepTimeTable)
+            await asyncio.sleep(game.sleepBigRoom)
 
             if await game.winning_conditions() == True:
                 break
@@ -304,15 +304,12 @@ async def timeTable (ctx):
                     else:
                         await personRoom.send(f"Murder unavailable")
  
-                
-            print("vou esperar")
             await asyncio.sleep(game.sleepTimeTable)
-            print("esperei e faço secret meeting")
+            
      
             await game.makeSecretMeeting()
-            print("acabou as secret meetings espera")
-            await asyncio.sleep(game.sleepTimeTable)
-            print("vai")
+            await asyncio.sleep(5)
+            
             for j in game.actions:
                 await j.__anext__()
                 await j.__anext__()
@@ -326,7 +323,7 @@ async def timeTable (ctx):
             for j in game.getListPlayers():
                 await j.getID().move_to(bigRoomV)
 
-            await asyncio.sleep(game.sleepTimeTable) 
+            await asyncio.sleep(game.sleepBigRoom)
 
             if await game.winning_conditions() == True:
                 break
@@ -353,6 +350,14 @@ async def timeTable (ctx):
             game.substitutionUsed = False
             if await game.winning_conditions() == True:
                 break
+
+            if i == 7:
+                for i in game.listPlayers:
+                    if i.isPlayer == True:
+                        i.score = 0
+                        i.diedAsPlayer = True
+                    else:
+                        i.score += 1
 
 
 client.run(token)

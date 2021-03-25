@@ -46,115 +46,106 @@ Number of players: Currently exactly 6 people are required to play Kingdom Royal
 
 Each of the 6 players has its own class, each with different victory conditions and skills.
 
-- King He is the king who ascended the throne, after murdering the former ruler and who led several invasions. He is disinherited, and plans to assassinate all those who threaten his throne. He doesn't realize that his distrust causes others to lose their loyalty to him. He can ask his subordinates to commit murders, but he cannot force them, for fear that they might turn against him. A land led by a man unable to trust others will hardly have a bright future ahead of him.
-- Prince An ambitious person. Originally the third in the line to receive the throne. But taking advantage of the king's distrust, he made him murder the other princes and was moved to the first in the la. To protect himself from the king's distrust he obtained anti-magic. If he comes to the throne, that country is likely to become a worse dictatorship than it was before.
-- The Double A former farmer who is loyal to [King] and looks exactly like him. He is not really ambitious, but he cannot allow [Prince] to become king, since he has always been made a fool of by him. If he, who has no ideals, becomes king, that country will likely fall to ruins in no time.
+- He is the king who has ascended to the throne by assassinating the previous ruler and has carried out many invasions. Having a distrustful personality, he's scheming murder of the ones that threaten his throne. He does not notice that his distrust makes others lose their loyalty for him. He can request his subordinates to commit [murder], but he cannot force them because he fears their animosity could become directed at him. A land ruled by a man that cannot trust others is unlikely to have a bright future.
+- Prince An ambitious person. He was originally only at the third place in the inheritance order of the king's rank. But taking advantage of the king's mistrust, he made him murder the other princes and moved up to the first place. He acquired anti-magic to guard himself against this mistrust. If he comes to the throne, this land is likely to turn into a worse dictatorship than it was before.
+- The Double An ex-farmer who is loyal to the [King] and looks exactly the same as him. He is not really ambitious, but he can absolutely not allow the [Prince] to become the king since he was always made a fool by him. If he, with no ideals, becomes the king, this land is likely to fall into ruin in no time.
 
-- [King]'s Subordinate Sorcerer. He's [Prince's] magic teacher and gets along with him. You will be satisfied as long as you can study magic and have no interest in the royal throne. No matter how much he increases his magical abilities, no one will value someone who isolates himself in his own shell.
-- [King] 's Subordinate Knight. Despite being his subordinate, the knight is planning to take revenge on the royal family that ruined his country. He strongly believes that he can only achieve happiness by exterminating the royal family. Obviously, a man drowning in his own feelings of loss will only fall into misery and darkness.
-- Revolutionary He's [King's] right hand man. By his competence, he realized that the nation will fall into ruins if it continues as it is. Therefore, it is preparing to take the throne. A ruler who has accumulated bitter feelings after committing so many murders is unable to lead a nation. At most, he himself will end up murdered.
+- Sorcerer A subordinate of the [King]. He is the teacher of the [Prince] in magic and also gets on well with the [Prince]. He is satisfied as long he can pursue his studies in magic and has no interest in the king's throne whatsoever. No matter how much he can raise his magic skills, nobody will value a person that secludes himself in his shell.
+- Knight A subordinate of the [King]. While being a subordinate, he is plotting revenge on the royal family for they have ruined his homeland. He believes firmly that he can only attain happiness by exterminating the royal family. As a matter of course, a man that has drowned in his own feelings of loss will only fall into the darkness of misfortune.
+- Revolutionary He is the right arm of the [King]. Because of his competence, he realized that this land is going to fall into ruin if it goes on like this. Hence, he prepared himself to take over the land. A ruler that has accumulated feelings of bitterness due to assassinations is incapable of leading a kingdom. At most he will be assassinated himself.
 
 ##### Winning conditions
 
 As mentioned earlier, each class has its specific victory condition.
 
-- King Protect your throne. (Elimination of those who threaten the king's throne - [Prince] [Revolutionary]).
-- Prince Become the king. (Elimination of [King] [The Double] [Revolutionary]).
-- The Double Death of those who try to kill you. (Death of [Prince] [Revolutionary]).
-- Sorcerer Survive.
+- King To protect his throne. (Elimination of the ones that threaten the king's throne - [Prince] [Revolutionary])
+- Prince To become the king. (Elimination of [King] [The Double] [Revolutionary]).
+- The Double Death of the ones that try to kill him. (Death of [Prince] [Revolutionary]).
+- Sorcerer To survive.
 - Knight To take revenge. (Death of [King] [Prince]).
-- Revolutionary
+- Revolutionary To become the king. (Murder of [King] [Prince] [The Double])
 
-Become the king. (Death of [King] [Prince] [The Double]).
+\* The game ends when all victory conditions for the remaining players have been met.
 
-3. Skills
+#### Skills
 
 Each class has its own specific skill. 
 
 * King
-* * [Murder] He can select a player he wants to kill and request [Sorcerer] or [Knight] to perform the action. He does not need to select.
-* * [Substituition] He can avoid being the target of [Assassination] once, switching places with [The Double] for a single day. If he is targeted for [Assassination] that day, [The Double] will die in place of [King].
+* * [Murder] He can select a player he wants to kill and request the [Sorcerer] or the [Knight] to execute this action. He does not need to select.
+* * [Substituition] He can once avoid being the target of [Assassination] by changing roles with [The Double] for a single day. If he was selected as the target on this day, [The Double] will die instead of the [King].
 * Prince 
-* * [Throne succession] He becomes able to use [Murder] as soon as [King] and [The Double] die.
+* * [Throne succession] He becomes able to use [Murder] once the [King] and [The Double] die.
 
 - * [Anti-magic] He cannot be killed by [Sorcery].
 
 * The Double
 
-- * [Inheritance] If [King] dies or [Substitution] is used, he is able to use [Murder].
+- * [Inheritance] If the [King] dies or [Substitution] was executed, he becomes able to use [Murder].
 
 * Sorcerer
 
-- * [Sorcery] He can choose whether to effectively kill the target selected by [Murder]. The marked person will become a burnt corpse.
+- * [Sorcery] He can choose whether to effectively kill the character that was selected by [Murder]. The targeted character will become a burnt corpse.
 
 * Knight
 
-- * [Deathblow] He can choose whether to effectively kill the target selected by [Murder]. Available only when [Sorcerer] is dead. The person will die by beheading.
+- * [Deathblow] He can choose whether to effectively kill the character that was selected by [Murder]. Only executable when the [Sorcerer] is dead. The targeted character will die due to beheading.
 
 * Revolutionary
 
-- * [Assassination] He can select a target to be killed. He does not need to select. The person will become a strangled corpse.
+- * [Assassination] He can assassinate the selected character. He does not need to select one. The targeted character will become a strangulated corpse.
 
 #### Timetable
 
-12 <A>
+~12 <A>
 
-- Pause, stay in your own room.
+- Break, standby in own room.
 
 12 ~ 14 <B>
 
-- Meeting in the big room.
+- Gathering in the big room.
 
 14 ~ 18 <C>
 
-- Selection of the partner for the [Secret Meeting] until 14:40. Stay 30 minutes in the selected person's room.
-- [King] is able to select a target for [Murder].
-- [Sorcerer] can use [Sorcery] ([Knight] can use [Deathblow]). (The person marked by [Sorcery] or [Deathblow] will die at 17:55)
+- Selection of [Secret Meeting] partner until 14:40. Spend 30 minutes in the room of the selected character.
+- The [King] is able to select a target for [Murder].
+- The [Sorcerer] can use [Sorcery] (the [Knight] can use [Deathblow]).
+- (The character that was targeted by [Sorcery] or [Deathblow] will die at 17:55)
 
 18 ~ 20 <D>
 
-- Meeting in the big room.
+- Gathering in the big room.
 
 20 ~ 22 <E>
 
-- Dinner in the room.
-- [Revolutionary] can use [Assassination].
-
-(The person who is marked by [Assassination] will die immediately)
+- Dinner in own room.
+-  The [Revolutionary] can use [Assassination].
+- (The character that was targeted by [Assassination] will immediately die).
 
 22 <F>
 
-- Pause, sleep.
+- Break, sleep.
 
 
 
 #### [Player]
 
-
-
 The [Player] works as follows: he can choose his own class with a restriction that will increase according to the number of the round. In the first round, whether N is initially the number of rounds de nido, the [Player] may choose between 6 - N classes, the others will be blocked from the choice by voting by the players. In addition, the [Player] will have an increased score according to the implementation of points. For now, it will be raffled and cannot be twice in a row.
 
 ##### Stab system
-
-
 
 To increase the likelihood, a stabbing system was added. Each person can stab a day. The person has at most the number of players alive - 1 lives. Each day the person regains 1 life.
 
 ##### Rounds
 
-
-
 The number of rounds must be agreed in advance. During the rounds players will be able to accumulate points, the ranking will be made from those accumulated points. The maximum number of rounds should be 6 and preferably greater than or equal to 3.
 
 ##### Score
-
-
 
 The score system is simple, if you win, you gain one point, with you lose, nothing happens, unless you are the Player, than you lose everything.
 
 ##### Modes
 
 
-
-Kingdom Royale can be played in two formats: two doubles and two solos or all solos. In the case of pairs, they cannot betray each other, unless one of them is [Player]. If 7 days pass, everyone wins (except for the [Player]).
+Kingdom Royale can be played in two formats: two pairs and two solos or all solos. In the case of pairs, they cannot betray each other, unless one of them is [Player]. If 7 days pass, everyone wins (except for the [Player]).
 

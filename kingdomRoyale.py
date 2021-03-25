@@ -43,7 +43,7 @@ class SecretMeeting:
         
 
 class KingdomRoyale:
-    secretMeetingTime : int = 20
+    secretMeetingTime : int = 90
 
     def __init__(self):# -> None:
         self.listPlayers : List[Player] = []
@@ -64,7 +64,8 @@ class KingdomRoyale:
         self.canUseSubstitution = True
         self.actions = []
         self.secretMeetings : List[SecretMeeting] = []
-        self.secretMeetingTime : int = 20
+        self.secretMeetingTime : int = 90
+        self.sleepBigRoom : int = 180
         self.sleepTimeTable : int = 30
         self.currentBlock : str = ""
         self.mode = "Pairs"
@@ -103,6 +104,7 @@ class KingdomRoyale:
 
         for i in self.listPlayers:
             await i.getPrivateTextChannel().delete()
+            await i.getID().move_to(self.graveyard)
             await i.getPrivateVoiceChannel().delete()
         
         self.listPlayers.extend(self.listDeadPlayers)
@@ -356,6 +358,7 @@ class KingdomRoyale:
                 string +=  (j)
             string += i.deathCause
         await bigRoom.send(string)
+        await asyncio.sleep(30)
 
     async def winning_conditions(self):
         WCKing = False
