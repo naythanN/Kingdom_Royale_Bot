@@ -97,32 +97,32 @@ Each class has its own specific skill.
 
 #### Timetable
 
-~12 <A>
+~12 \<A\>
 
 - Break, standby in own room.
 
-12 ~ 14 <B>
+12 ~ 14 \<B\>
 
 - Gathering in the big room.
 
-14 ~ 18 <C>
+14 ~ 18 \<C\>
 
 - Selection of [Secret Meeting] partner until 14:40. Spend 30 minutes in the room of the selected character.
 - The [King] is able to select a target for [Murder].
 - The [Sorcerer] can use [Sorcery] (the [Knight] can use [Deathblow]).
 - (The character that was targeted by [Sorcery] or [Deathblow] will die at 17:55)
 
-18 ~ 20 <D>
+18 ~ 20 \<D\>
 
 - Gathering in the big room.
 
-20 ~ 22 <E>
+20 ~ 22 \<E\>
 
 - Dinner in own room.
 -  The [Revolutionary] can use [Assassination].
 - (The character that was targeted by [Assassination] will immediately die).
 
-22 <F>
+22 \<F\>
 
 - Break, sleep.
 
