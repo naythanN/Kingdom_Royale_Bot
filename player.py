@@ -20,6 +20,7 @@ class Player:
         self.score = 0
         self.diedAsPlayer : bool = False
         self.occupied = False
+        self.skipped = False
         self.pair : Player = None
         
     

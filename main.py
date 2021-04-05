@@ -2,20 +2,25 @@ import discord
 from discord.ext import commands
 import os
 import asyncio
-import time
-import concurrent.futures
-import threading
-
+from discord_slash import SlashCommand
+from discord_slash.utils.manage_commands import create_choice, create_option
 
 from player import Player
 from kingdomRoyale import KingdomRoyale, SecretMeeting
 
-client = commands.Bot(command_prefix="/")
+from table import timeTable
+
+
+client = commands.Bot(command_prefix="/",intents=discord.Intents.all())
+#client = discord.Client(intents=discord.Intents.all())
+
 token = os.getenv("DISCORD_BOT_TOKEN")
-print(token)
+guilds = [802152034484617236, 824649618079350815]
 
 game = KingdomRoyale ()
 
+
+slash = SlashCommand(client, sync_commands=True)
 
 @client.event
 async def on_ready() :
@@ -23,23 +28,33 @@ async def on_ready() :
     print("I am online")
 
 
+@slash.slash(name="skip", guild_ids=guilds,
+             description="Vote to skip current block if its a secret meeting or a big room")
+async def skip(ctx):
+    author = ctx.message.author
+    player = [i for i in game.listPlayers if i.getID() == author][0]
+    print(player)
+    if game.currentBlock == "C":
+        for i in game.secretMeetings:
+            if player in {i.other, i.whoRoom} and player.skipped == False and player.occupied == True:
+                i.skip += 1
+                player.skipped = True
+                if i.skip == 2:
+                    await i.cond.acquire()
+                    i.cond.notify()
+                    i.cond.release()
 
+    elif game.currentBlock in {"B", "D"}:
+        if player.skipped == False:
+            game.bigRoomSkip += 1
+            player.skipped = True
+            if game.bigRoomSkip == len(game.getListPlayers()):
+                await game.cond.acquire()
+                game.cond.notify()
+                game.cond.release()
 
-
-@client.command()
-async def clear(ctx, amount=3) :
-    await ctx.channel.purge(limit=amount)
-
-@client.command(name = "reset")
-async def reset (ctx):
-    for i in game.getAllPrivateTextChannels():
-        await i.delete()
-    for i in game.getAllPrivateVoiceChannels():
-        await i.delete()
-    await game.getBigRoomChat().delete()
-    await game.getBigRoomVoice().delete()
-    game.taskTimeTable.cancel()
-    game.__init__()
+    else:
+        ctx.send("There is nothing to skip")
 
 
 
@@ -52,12 +67,24 @@ async def cleanMess (ctx):
     await thisServer.create_text_channel("Main")
     game.__init__()
 
-@client.command(name = "helpMe")
+
+@slash.slash(name="help", guild_ids=guilds,
+             description="Vote to skip current block")
 async def helpMe (ctx):
     helpBot = "Welcome to the Kingdom Royale Bot, a discord bot that implements the game of the same name based on Eiji Mikaje light novel, Utsuro no hako to zero no Maria.\n Avaiable commands:\n /reg register yourself to play the game.\n /start Start the game with current registered players. \n /choose [member_name] Choose a player of the game as partner for secreet meeting (if name has spaces, quote it with \"\").\n /classC [class_name one of King, Sorcerer, Knight, Prince, Double, Revolutionary] If you are the [Player] you can choose your class. \n /Murder [member_name] If you are able to select, you can choose someone to be marked to die.\n /Assassination [member_name] If you are the revolutionary, you can select someone to die.\n /Sorcery If you are the sorcerer, you burn the one marked to death.\n /Deathblow If you are the knight you can kill the one marked if the sorcerer is dead.\n /Substitution If you are the King you can prevent being killed by assassination changing roles with the Double. \n /Strike [member_name] You can strike someone with your knife.\n /cleanMess to clean the server. \n /reset to reset the game."
     await ctx.send(helpBot)
 
-@client.command(name = "Strike")
+
+
+@slash.slash(name="Strike", guild_ids=guilds,
+             description="Stab someone",options=[
+                    create_option(
+                    name="target",
+                    description="Select target to stab",
+                    option_type=6,
+                    required=True
+                )
+                ])
 async def Strike (ctx, target):
     player = ctx.message.author
     for i in game.getListPlayers():
@@ -70,7 +97,17 @@ async def Strike (ctx, target):
                 await i.getID().send("The target does not exist or is already dead.")
     await game.getPrivateTextChannel(player.name).send("Strike unavailable")
 
-@client.command(name = "Sorcery")
+
+
+@slash.slash(name="Sorcery", guild_ids=guilds,
+             description="Confirm death request from [Murder] user",options=[
+                    create_option(
+                    name="target",
+                    description="Select target to become a burnt corpse",
+                    option_type=6,
+                    required=True
+                )
+                ])
 async def Sorcery (ctx):
     player = ctx.message.author
     for i in game.getListPlayers():
@@ -79,11 +116,20 @@ async def Sorcery (ctx):
                 game.actions.append(game.sorcery(i))
                 return                
             elif game.murderTarget is not None and game.murderTarget.pair == i and i.isPlayer == False:
-                await i.getPrivateTextChannel().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
+                await i.getPrivateTextChannel().send("This is your dear friend you have known forever, you cannot bring yourself to kill him.")
 
     await game.getPrivateTextChannel(player.name).send("Sorcery unavailable")
 
-@client.command(name = "Deathblow")
+
+@slash.slash(name="Deathblow", guild_ids=guilds,
+             description="Confirm death request from [Murder] user",options=[
+                    create_option(
+                    name="target",
+                    description="Select target to die by beheading",
+                    option_type=6,
+                    required=True
+                )
+                ])
 async def Deathblow (ctx):
     player = ctx.message.author
     for i in game.getListPlayers():
@@ -93,10 +139,20 @@ async def Deathblow (ctx):
                 return
                 
             elif game.murderTarget is not None and game.murderTarget.pair == i and i.isPlayer == False:
-                i.getPrivateTextChannel().send("This is your dear friend you have known forever, you can'nt bring yourself to kill him.")
+                i.getPrivateTextChannel().send("This is your dear friend you have known forever, you cannot bring yourself to kill him.")
     await game.getPrivateTextChannel(player.name).send("Deathblow unavailable")
 
-@client.command(name = "Murder")
+
+@slash.slash(name="Murder", guild_ids=guilds,
+                description="Select a target for [Murder]",options=[
+                    create_option(
+                    name="target",
+                    description="Target to be marked by [Murder]",
+                    option_type=6,
+                    required=True
+                )
+                ]
+                )
 async def Murder (ctx, target):
     player = ctx.message.author
     for i in game.getListPlayers():
@@ -111,7 +167,10 @@ async def Murder (ctx, target):
                 await i.getID().send("The target does not exist or is already dead.")
     await game.getPrivateTextChannel(player.name).send("Murder unavailable")
 
-@client.command(name = "Substitution")
+
+
+@slash.slash(name="Substitution", guild_ids=guilds,
+             description="The King will change roles with the Double")
 async def Substitution (ctx):
     player = ctx.message.author
     for i in game.getListPlayers():
@@ -121,7 +180,18 @@ async def Substitution (ctx):
             return
     await game.getPrivateTextChannel(player.name).send("Substitution unavailable")
 
-@client.command(name = "Assassination")
+
+
+@slash.slash(name="Assassination", guild_ids=guilds,
+                description="Select a target for [Assassination]",options=[
+                    create_option(
+                    name="target",
+                    description="Target to die",
+                    option_type=6,
+                    required=True
+                )
+                ]
+                )
 async def Assassination (ctx, target):
     player = ctx.message.author
     for i in game.getListPlayers():
@@ -136,19 +206,55 @@ async def Assassination (ctx, target):
                 await i.getID().send("The target does not exist or is already dead.")
     await game.getPrivateTextChannel(player.name).send("Assassination unavailable")
 
-@client.command(name = "reg")
+
+
+@slash.slash(name="reg", guild_ids=guilds,
+             description="Register yourself to participate in the game")
 async def reg (ctx):
     members = [i.member for i in game.listPlayers]
     if ctx.message.author not in members:
         game.addPlayer(ctx.message.author)
+    else:
+        await ctx.send("Already registered")
 
-@client.command(name = "mode")
-async def mode (ctx, gameMode):
+
+
+@slash.slash(name="mode", guild_ids=guilds,
+             description="Change game mode, default=Pairs",
+             options=[
+                 create_option(
+                     name="gameMode",
+                     description="Select gameMode",
+                     option_type=3,
+                     required=True,
+                     choices=[
+                         create_choice(
+                             name="Solo",
+                             value="Solo"
+                         ),
+                         create_choice(
+                             name="Pairs",
+                             value="Pairs"
+                         )
+                     ]
+                 )
+             ])
+async def mode (ctx, gameMode: str):
     if gameMode == "Solo" or gameMode == "Pairs":
         game.mode = gameMode 
     else:
         await ctx.send("Unavaible game mode")
-@client.command(name = "choose")
+
+@slash.slash(name="choose", guild_ids=guilds,
+                description="Select a partner for Secret Meeting",options=[
+                    create_option(
+                    name="target",
+                    description="Partner",
+                    option_type=6,
+                    required=True
+                )
+                ]
+                )
 async def choose (ctx, target):
     
     player = ctx.message.author
@@ -166,9 +272,43 @@ async def choose (ctx, target):
         secret = SecretMeeting(playerChooser, playerChosen)
         game.secretMeetings.append(secret)
 
-@client.command(name = "classC")
+@slash.slash(name="class", guild_ids=guilds,
+             description="Select your class if you are the [Player]",
+             options=[
+                 create_option(
+                     name="gameClass",
+                     description="Select class",
+                     option_type=3,
+                     required=True,
+                     choices=[
+                         create_choice(
+                             name= "King",
+                             value="King"
+                         ),
+                         create_choice(
+                             name= "Prince",
+                             value="Prince"
+                         ),
+                         create_choice(
+                             name= "Double",
+                             value="Double"
+                         ),
+                         create_choice(
+                             name= "Knight",
+                             value="Knight"
+                         ),
+                         create_choice(
+                             name= "Sorcerer",
+                             value="Sorcerer"
+                         ),
+                         create_choice(
+                             name= "Revolutionary",
+                             value="Revolutionary"
+                         )
+                     ]
+                 )
+             ])
 async def classC (ctx, gameClass):
-
 
     player = ctx.message.author
     for i in game.getListPlayers():
@@ -188,11 +328,14 @@ async def classC (ctx, gameClass):
                 return
             i.setClass(gameClass)
             game.classToPick.remove(gameClass)
+            game.cond.acquire()
+            game.cond.notify()
+            game.cond.release()
 
 
 
-    
-@client.command(name = "start")
+@slash.slash(name="start", guild_ids=guilds,
+             description="Start Kingdom Royale")
 async def start (ctx):
     if game.gameStarted == True:
         await ctx.send("Game already started")
@@ -215,149 +358,7 @@ async def start (ctx):
     game.setPlayer()
 
 
-    game.taskTimeTable = asyncio.create_task (timeTable (ctx))
-    
-
-
-async def timeTable (ctx):
-    await ctx.send("Welcome to Kingdom Royale! Hehe")
-    for k in range(6):
-        if k != 0:
-            await game.turnReset()
-            game.setPlayer()
-        i = 0
-        if game.mode == "Pairs":
-            game.makePairs()
-        while i < 7:
-            game.secretMeetings.clear()
-            bigRoomC = game.getBigRoomChat()
-            bigRoomV = game.getBigRoomVoice()
-            game.currentBlock = "A"
-            game.currentDay = game.getDays()[i]
-            await bigRoomC.send(f"{game.getDays()[i]} Day <A> owns's room")
-
-
-            for j in game.getListPlayers():
-                j.life += 1
-                if j.life > len(game.getListPlayers()) - 1:
-                    j.life = len(game.getListPlayers()) - 1
-                j.strike = True
-                personRoom = game.getPrivateTextChannel(j.name)
-                await personRoom.send(f"{game.getDays()[i]} Day <A> [{j.name}]'s room")
-                if i == 0 and j.pair is not None:
-                    await personRoom.send(f"Your dear friend {j.pair.name} is also in the game, you wouldn't want anything bad to happen to him right?")
-                if j.isPlayer == True and i == 0:
-                    await personRoom.send(f"Gufufu - PleaSed to - meEt you - {j.name}-kun - Alright - you wiLl now - select yOur [class]")
-                await j.getID().move_to(j.getPrivateVoiceChannel())
-
-            await asyncio.sleep(game.sleepTimeTable)
-            game.currentBlock = "B"
-            if i == 0:
-                game.setClasses()
-            await bigRoomC.send(f"{game.getDays()[i]} Day <B> Big room")
-            for j in game.getListPlayers():
-                await j.getID().move_to(bigRoomV)
-            await asyncio.sleep(game.sleepBigRoom)
-
-            if await game.winning_conditions() == True:
-                break
-
-            game.currentBlock = "C"
-            await bigRoomC.send(f"{game.getDays()[i]} Day <C> owns's room")
-            if i == 0:
-                
-                for j in game.getListPlayers():
-                    personRoom = game.getPrivateTextChannel(j.name)
-                    await personRoom.send(f"Your [class] is [{j.gameClass}]")
-
-            for j in game.getListPlayers():
-                personRoom = game.getPrivateTextChannel(j.name)
-                await j.getID().move_to(j.getPrivateVoiceChannel())
-                if j.getClass() == "Sorcerer":
-                    if game.murderTarget is None:
-                        await personRoom.send(f"No target has been selected for [Murder] yet.")
-                    else:
-                        await personRoom.send(f"Will you burn [{game.murderTarget.getName()}] to death by using [Sorcery]?")
-                if j.getClass() == "Knight":
-                    classes = [classes.gameClass for classes in game.getListPlayers()]
-                    if game.murderTarget is None and "Sorcerer" not in classes:
-                        await personRoom.send(f"No target has been selected for [Murder] yet.")
-                    elif game.murderTarget is not None and "Sorcerer" not in classes:
-                        await personRoom.send(f"Do you want to kill [{game.murderTarget.getName()}] by using [Deathblow]?")
-                if j.getClass() == "King":
-                    if j == game.getMurderUser():
-                        await personRoom.send(f"Please select a target for [Murder]")
-                    if game.canUseSubstitution == True:
-                        await personRoom.send(f"Will you change roles with The Double?")
-                
-                
-                if j.getClass() == "Prince":
-                    classes = [classes.gameClass for classes in game.getListPlayers()]
-                    if j == game.getMurderUser():
-                        await personRoom.send(f"Please select a target for [Murder]")
-                    else:
-                        await personRoom.send(f"Murder unavailable")
-                if j.getClass() == "Double":
-                    classes = [classes.gameClass for classes in game.getListPlayers()]
-                    if j == game.getMurderUser():
-                        await personRoom.send(f"Please select a target for [Murder]")
-                    else:
-                        await personRoom.send(f"Murder unavailable")
- 
-            await asyncio.sleep(game.sleepTimeTable)
-            
-     
-            await game.makeSecretMeeting()
-            await asyncio.sleep(5)
-            
-            for j in game.actions:
-                await j.__anext__()
-                await j.__anext__()
-            game.actions.clear()
-
-            if await game.winning_conditions() == True:
-                break
-
-            game.currentBlock = "D"
-            await bigRoomC.send(f"{game.getDays()[i]} Day <D> Big room")
-            for j in game.getListPlayers():
-                await j.getID().move_to(bigRoomV)
-
-            await asyncio.sleep(game.sleepBigRoom)
-
-            if await game.winning_conditions() == True:
-                break
-
-            game.currentBlock = "E"
-            await bigRoomC.send(f"{game.getDays()[i]} Day <E> owns's room")
-
-            for j in game.getListPlayers():
-                personRoom = game.getPrivateTextChannel(j.name)
-                await personRoom.send(f"{game.getDays()[i]} Day <E> [{j.name}]'s room")
-                if j.getClass() == "Revolutionary":
-                    await personRoom.send(f"Please select a target for [Assassination]")
-                await j.getID().move_to(j.getPrivateVoiceChannel())
-            
-            await asyncio.sleep(game.sleepTimeTable)
-            for j in game.actions:
-
-                await j.__anext__()
-                await j.__anext__()
-            i += 1
-            game.actions.clear()
-            
-            game.murderTarget = None
-            game.substitutionUsed = False
-            if await game.winning_conditions() == True:
-                break
-
-            if i == 7:
-                for i in game.listPlayers:
-                    if i.isPlayer == True:
-                        i.score = 0
-                        i.diedAsPlayer = True
-                    else:
-                        i.score += 1
+    game.taskTimeTable = asyncio.create_task (timeTable (ctx, game))
 
 
 client.run(token)

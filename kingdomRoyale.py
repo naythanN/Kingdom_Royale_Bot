@@ -5,7 +5,7 @@ from typing import List
 from player import Player
 import random
 import discord
-
+from cancelSleep import cancelableSleep
 
 
 class SecretMeeting:
@@ -14,17 +14,23 @@ class SecretMeeting:
         self.time = KingdomRoyale.secretMeetingTime
         self.whoRoom : Player = chooser
         self.other : Player = chosen
-    
+        self.task = None
+        self.cond : asyncio.Condition = None
+        self.skip : int = 0
     def double (self) -> None:
         self.time = self.time*2
 
     async def arrange (self) -> None:
         while self.whoRoom.occupied == True or self.other.occupied == True:
-            await asyncio.sleep(KingdomRoyale.secretMeetingTime)
+            await asyncio.sleep(10)
         self.whoRoom.occupied = True
         self.other.occupied = True
         await self.other.getID().move_to(self.whoRoom.getPrivateVoiceChannel())
-        await asyncio.sleep(self.time)
+        self.cond = asyncio.Condition()
+        await cancelableSleep(self.time, self.cond)
+        self.whoRoom.skipped = False
+        self.skip = 0
+        self.other.skipped = False
         self.whoRoom.occupied = False
         await self.other.getID().move_to(self.other.getPrivateVoiceChannel())
         self.other.occupied = False
@@ -44,6 +50,7 @@ class SecretMeeting:
 
 class KingdomRoyale:
     secretMeetingTime : int = 90
+    cond : asyncio.Condition = asyncio.Condition()
 
     def __init__(self):# -> None:
         self.listPlayers : List[Player] = []
@@ -54,6 +61,7 @@ class KingdomRoyale:
         self.bigRoomV = None
         self.graveyard = None
         self.taskTimeTable = None
+        self.taskTurn = None
         self.bigRoomC = None
         self.avaiableClasses = ["King", "Prince", "Double", "Revolutionary", "Sorcerer", "Knight"]
         self.classToPick = ["King", "Prince", "Double", "Revolutionary", "Sorcerer", "Knight"]
@@ -69,6 +77,7 @@ class KingdomRoyale:
         self.sleepTimeTable : int = 30
         self.currentBlock : str = ""
         self.mode = "Pairs"
+        self.bigRoomSkip = 0
         self.gameStarted = False
         self.guild = None
         self.currentDay = "First"
@@ -261,7 +270,6 @@ class KingdomRoyale:
 
     async def makeSecretMeeting (self) -> None:
         
-        listTasks = []
         listMeetings = []
         await self.getBigRoomChat().send("Secret Meetings")
 
@@ -271,9 +279,9 @@ class KingdomRoyale:
             await j
 
         for i in self.secretMeetings:
-            listTasks.append(asyncio.create_task(i.arrange()))
-        for j in listTasks:
-            await j
+            i.task = asyncio.create_task(i.arrange())
+        for j in self.secretMeetings:
+            await j.task
 
     async def strike (self, striker : Player, target) -> None:
         playerTarget = next(player for player in self.listPlayers if player.name == target)
@@ -306,6 +314,7 @@ class KingdomRoyale:
         listP = [players for players in self.listDeadPlayers if players.gameClass == gameClass]
         if len(listP) > 0:
             return listP[0]
+    
     async def makeDead(self, dead: Player):
         dead.status = "Dead"
         dead.life = 0
@@ -314,6 +323,8 @@ class KingdomRoyale:
         await dead.getPrivateVoiceChannel().delete()
         self.listPlayers.remove(dead)
         self.listDeadPlayers.append(dead)
+        if self.winning_conditions():
+            self.taskTurn.cancel()
         
     def makePairs (self):
         numberOfPairs = 0
