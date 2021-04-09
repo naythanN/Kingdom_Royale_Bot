@@ -6,7 +6,8 @@ from player import Player
 import random
 import discord
 from cancelSleep import cancelableSleep
-
+import copy
+import dill
 
 class SecretMeeting:
     def __init__(self, chooser, chosen) -> None:
@@ -20,14 +21,14 @@ class SecretMeeting:
     def double (self) -> None:
         self.time = self.time*2
 
-    async def arrange (self) -> None:
+    async def arrange (self, game) -> None:
         while self.whoRoom.occupied == True or self.other.occupied == True:
             await asyncio.sleep(10)
         self.whoRoom.occupied = True
         self.other.occupied = True
         await self.other.getID().move_to(self.whoRoom.getPrivateVoiceChannel())
         self.cond = asyncio.Condition()
-        await cancelableSleep(self.time, self.cond)
+        await cancelableSleep(self.time, self.cond, game)
         self.whoRoom.skipped = False
         self.skip = 0
         self.other.skipped = False
@@ -50,19 +51,19 @@ class SecretMeeting:
 
 class KingdomRoyale:
     secretMeetingTime : int = 90
-    cond : asyncio.Condition = asyncio.Condition()
 
     def __init__(self):# -> None:
         self.listPlayers : List[Player] = []
         self.listDeadPlayers : List[Player] = []
         self.privateTextChannels = []
         self.privateVoiceChannels = []
-        self.pastPlayers = []
+        self.pastPlayers : List[Player] =  []
+        self.pastPlayersClasses : List[str] = [] 
         self.bigRoomV = None
         self.graveyard = None
         self.taskTimeTable = None
         self.taskTurn = None
-        self.bigRoomC = None
+        self.bigRoomC : discord.TextChannel = None
         self.avaiableClasses = ["King", "Prince", "Double", "Revolutionary", "Sorcerer", "Knight"]
         self.classToPick = ["King", "Prince", "Double", "Revolutionary", "Sorcerer", "Knight"]
         self.days = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh"]
@@ -78,8 +79,9 @@ class KingdomRoyale:
         self.currentBlock : str = ""
         self.mode = "Pairs"
         self.bigRoomSkip = 0
+        self.cond : asyncio.Condition = None
         self.gameStarted = False
-        self.guild = None
+        self.guild : discord.guild = None
         self.currentDay = "First"
         self.victoryConditions = {
             "King"          : ["Prince","Revolutionary"],
@@ -90,8 +92,25 @@ class KingdomRoyale:
             "Revolutionary" : ["King", "Prince", "Double"]
         }
 
-        
+    """ 
+    def __deepcopy__(self, memo):
 
+
+    def __getstate__(self):
+        state = copy.deepcopy(self.__dict__)
+        
+        for i in state['listPlayers']:
+            del i.privateTextChannel
+            del i.member
+        for i in state['listDeadPlayers']:
+            del i.privateTextChannel
+            del i.member
+        for i in state['pastPlayers']:
+            del i.privateTextChannel
+            del i.member
+
+        return state
+    """
     async def sorcery (self, killer : Player):
         yield
         if self.murderTarget.gameClass != "Prince" and self.murderTarget is not None:
@@ -110,8 +129,22 @@ class KingdomRoyale:
             i.life = 5
             i.status = "Alive"
             i.deathCause = ""
-
+            
+            i.pair = None
+            if i.isPlayer == True:
+                i.isPlayer = False
+                self.pastPlayers.append(i)
+                self.pastPlayersClasses.append(i.gameClass)
+            i.gameClass = None
         for i in self.listPlayers:
+            
+            i.pair = None
+            i.life = 5
+            if i.isPlayer == True:
+                i.isPlayer = False
+                self.pastPlayers.append(i)
+                self.pastPlayersClasses.append(i.gameClass)
+            i.gameClass = None
             await i.getPrivateTextChannel().delete()
             await i.getID().move_to(self.graveyard)
             await i.getPrivateVoiceChannel().delete()
@@ -279,9 +312,14 @@ class KingdomRoyale:
             await j
 
         for i in self.secretMeetings:
-            i.task = asyncio.create_task(i.arrange())
+            i.task = asyncio.create_task(i.arrange(self))
+        
         for j in self.secretMeetings:
-            await j.task
+            if j is not None:
+                try:
+                    await j.task
+                except:
+                    pass
 
     async def strike (self, striker : Player, target) -> None:
         playerTarget = next(player for player in self.listPlayers if player.name == target)
@@ -314,8 +352,16 @@ class KingdomRoyale:
         listP = [players for players in self.listDeadPlayers if players.gameClass == gameClass]
         if len(listP) > 0:
             return listP[0]
-    
+
+    async def onlyPairsAlive(self) -> None:
+        if len(self.listPlayers) == 2:
+            first = self.listPlayers[0]
+            second = self.listPlayers[1]
+            if first.pair == second and second.isPlayer == False and first.isPlayer == False:
+                self.taskTurn.cancel()
+
     async def makeDead(self, dead: Player):
+        await self.bigRoomC.set_permissions(self.guild.default_role, read_messages=True)
         dead.status = "Dead"
         dead.life = 0
         await dead.getID().move_to(self.graveyard)
@@ -323,8 +369,10 @@ class KingdomRoyale:
         await dead.getPrivateVoiceChannel().delete()
         self.listPlayers.remove(dead)
         self.listDeadPlayers.append(dead)
-        if self.winning_conditions():
+        if await self.winning_conditions():
             self.taskTurn.cancel()
+        await self.onlyPairsAlive()
+
         
     def makePairs (self):
         numberOfPairs = 0

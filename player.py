@@ -19,6 +19,7 @@ class Player:
         self.listKilled : List[str] = []
         self.score = 0
         self.diedAsPlayer : bool = False
+        self.choosedPartner = False
         self.occupied = False
         self.skipped = False
         self.pair : Player = None

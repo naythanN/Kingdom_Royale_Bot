@@ -3,8 +3,15 @@ from player import Player
 from kingdomRoyale import KingdomRoyale, SecretMeeting
 import asyncio
 from cancelSleep import cancelableSleep
+import jsonpickle
+import json
+
+import logging
+from logConfig import myLogger, jsonLogger
+
 
 async def turnLoop (ctx, game : KingdomRoyale):
+    logger = myLogger()
     i = 0
     if game.mode == "Pairs":
         game.makePairs()
@@ -13,9 +20,10 @@ async def turnLoop (ctx, game : KingdomRoyale):
         bigRoomC = game.getBigRoomChat()
         bigRoomV = game.getBigRoomVoice()
         game.currentBlock = "A"
+        serial = jsonpickle.encode(game)
+        jsonLogger(serial)
         game.currentDay = game.getDays()[i]
         await bigRoomC.send(f"{game.getDays()[i]} Day <A> owns's room")
-
 
         for j in game.getListPlayers():
             j.life += 1
@@ -28,21 +36,26 @@ async def turnLoop (ctx, game : KingdomRoyale):
                 await personRoom.send(f"Your dear friend {j.pair.name} is also in the game, you wouldn't want anything bad to happen to him right?")
             if j.isPlayer == True and i == 0:
                 await personRoom.send(f"Gufufu - PleaSed to - meEt you - {j.name}-kun - Alright - you wiLl now - select yOur [class]")
-                await cancelableSleep(1000, game.cond)
             await j.getID().move_to(j.getPrivateVoiceChannel())
-
+        if i == 0:
+            await cancelableSleep(1000, game.cond, game)
         await asyncio.sleep(10)
+        await game.bigRoomC.set_permissions(game.guild.default_role, read_messages=True)
         game.currentBlock = "B"
+        serial = jsonpickle.encode(game)
+        jsonLogger(serial)
         if i == 0:
             game.setClasses()
         await bigRoomC.send(f"{game.getDays()[i]} Day <B> Big room")
         for j in game.getListPlayers():
             await j.getID().move_to(bigRoomV)
 
-        await cancelableSleep(game.sleepBigRoom, game.cond)
-
-        #game.bigRoomC.
+        await cancelableSleep(game.sleepBigRoom, game.cond, game)
+        game.bigRoomSkip = 0
         game.currentBlock = "C"
+        serial = jsonpickle.encode(game)
+        jsonLogger(serial)
+        
         await bigRoomC.send(f"{game.getDays()[i]} Day <C> owns's room")
         if i == 0:
             
@@ -96,15 +109,20 @@ async def turnLoop (ctx, game : KingdomRoyale):
             await j.__anext__()
         game.actions.clear()
 
-
         game.currentBlock = "D"
+        serial = jsonpickle.encode(game)
+        jsonLogger(serial)
         await bigRoomC.send(f"{game.getDays()[i]} Day <D> Big room")
         for j in game.getListPlayers():
+            j.choosedPartner = False
             await j.getID().move_to(bigRoomV)
 
-        await cancelableSleep(game.sleepBigRoom, game.cond)
-
+        await cancelableSleep(game.sleepBigRoom, game.cond, game)
+        game.bigRoomSkip = 0
         game.currentBlock = "E"
+        serial = jsonpickle.encode(game)
+        jsonLogger(serial)
+        await game.bigRoomC.set_permissions(game.guild.default_role, read_messages=False)
         await bigRoomC.send(f"{game.getDays()[i]} Day <E> owns's room")
 
         for j in game.getListPlayers():
@@ -117,7 +135,6 @@ async def turnLoop (ctx, game : KingdomRoyale):
         
         await asyncio.sleep(game.sleepTimeTable + 10)
         for j in game.actions:
-
             await j.__anext__()
             await j.__anext__()
         i += 1
@@ -125,23 +142,32 @@ async def turnLoop (ctx, game : KingdomRoyale):
         
         game.murderTarget = None
         game.substitutionUsed = False
-
+        await game.bigRoomC.set_permissions(game.guild.default_role, read_messages=True)
         if i == 7:
-            for i in game.listPlayers:
-                if i.isPlayer == True:
-                    i.score = 0
-                    i.diedAsPlayer = True
-                else:
-                    i.score += 1
-
+            if len(game.listPlayers) == 6:
+                for j in game.listPlayers:
+                    if j.isPlayer == True:
+                        j.score = 0
+                        j.diedAsPlayer = True
+                    else:
+                        j.score += 1
+            else:
+                for j in game.listPlayers:
+                    if j.isPlayer == True:
+                        j.score = 0
+                        j.diedAsPlayer = True
 
 async def timeTable (ctx, game : KingdomRoyale):
-    await ctx.send("Welcome to Kingdom Royale! Hehe")
     for k in range(6):
+        game.cond = asyncio.Condition()
         if k != 0:
             await game.turnReset()
+            
             game.setPlayer()
-            game.taskTurn = asyncio.create_task(turnLoop(ctx, game))
+        game.taskTurn = asyncio.create_task(turnLoop(ctx, game))
+        try:
             await game.taskTurn
+        except:
+            print("fodasse")
 
 
