@@ -417,7 +417,7 @@ class KingdomRoyale:
                 string +=  (j)
             string += i.deathCause
         await bigRoom.send(string)
-        await asyncio.sleep(30)
+        await asyncio.sleep(120)
 
     async def winning_conditions(self):
         WCKing = False

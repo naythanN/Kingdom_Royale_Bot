@@ -20,8 +20,8 @@ async def turnLoop (ctx, game : KingdomRoyale):
         bigRoomC = game.getBigRoomChat()
         bigRoomV = game.getBigRoomVoice()
         game.currentBlock = "A"
-        serial = jsonpickle.encode(game)
-        jsonLogger(serial)
+    #    serial = jsonpickle.encode(game)
+    #    jsonLogger(serial)
         game.currentDay = game.getDays()[i]
         await bigRoomC.send(f"{game.getDays()[i]} Day <A> owns's room")
 
@@ -42,8 +42,8 @@ async def turnLoop (ctx, game : KingdomRoyale):
         await asyncio.sleep(10)
         await game.bigRoomC.set_permissions(game.guild.default_role, read_messages=True)
         game.currentBlock = "B"
-        serial = jsonpickle.encode(game)
-        jsonLogger(serial)
+    #    serial = jsonpickle.encode(game)
+    #    jsonLogger(serial)
         if i == 0:
             game.setClasses()
         await bigRoomC.send(f"{game.getDays()[i]} Day <B> Big room")
@@ -120,8 +120,8 @@ async def turnLoop (ctx, game : KingdomRoyale):
         await cancelableSleep(game.sleepBigRoom, game.cond, game)
         game.bigRoomSkip = 0
         game.currentBlock = "E"
-        serial = jsonpickle.encode(game)
-        jsonLogger(serial)
+    #    serial = jsonpickle.encode(game)
+    #    jsonLogger(serial)
         await game.bigRoomC.set_permissions(game.guild.default_role, read_messages=False)
         await bigRoomC.send(f"{game.getDays()[i]} Day <E> owns's room")
 
@@ -168,6 +168,6 @@ async def timeTable (ctx, game : KingdomRoyale):
         try:
             await game.taskTurn
         except:
-            print("fodasse")
+            pass
 
 
