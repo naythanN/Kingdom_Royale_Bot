@@ -1,2 +1,2 @@
 discord.py
-discord_slash
+discord-py-slash-command
